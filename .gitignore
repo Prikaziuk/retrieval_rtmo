@@ -1,3 +1,5 @@
 *.nc
 src/+local/
+output/*
+measured/*
 ~$Input_data.xlsx
