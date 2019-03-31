@@ -1,3 +1,4 @@
 *.nc
 src/+local/
 output/*
+measured/*
