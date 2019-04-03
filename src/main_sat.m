@@ -94,7 +94,7 @@ if all(isfield(measured, {'lat', 'lon'}))
     ncwrite(nc_path, 'lon', measured.lon(i_row, i_col))
 end
 
-%% safely writing data from (par)for loop
+%% safely writing and plotting data from (par)for loop
 q = parallel.pool.DataQueue;
 afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
 afterEach(q, @(x) sat.write_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, nc_path, var_names));
