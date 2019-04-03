@@ -1,6 +1,6 @@
-function reflectance(meas_wl, reflSAIL, refl_meas, j, rmse)
+function h = reflectance_hidden(meas_wl, reflSAIL, refl_meas, j, rmse)
 
-    figure(j * 1e3)  % e3 to prevent overlapping with hidden plots
+    h = figure('Visible', 'off');  % no way to make it numbered properly
     
     plot(meas_wl, reflSAIL, 'o-')
     hold on
