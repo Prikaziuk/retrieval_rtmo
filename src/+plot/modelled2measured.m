@@ -1,9 +1,9 @@
-function modelled2measured(modelled, modelled_names, measured, include_i, simulation_name)
+function modelled2measured(modelled, tab, measured_tab, simulation_name)
 
-    measured_names = table2array(measured(:, 1));
-    measured(:, 1) = [];
-    names = measured.Properties.VariableNames;
-    measured = table2array(measured);
+    measured_names = table2array(measured_tab(:, 1));
+    measured_tab(:, 1) = [];
+    names = measured_tab.Properties.VariableNames;
+    measured = table2array(measured_tab);
 
     %% find groups based on column names
     names_spl = split(names, '_');                      % split column headers by '_'
@@ -21,7 +21,7 @@ function modelled2measured(modelled, modelled_names, measured, include_i, simula
     end
     
     %% find which validation variables where provided
-    [vars, i_meas, i_mod] = intersect(measured_names, modelled_names, 'stable');
+    [vars, i_meas, i_mod] = intersect(measured_names, tab.variable, 'stable');
     
     %% define subplot parameters
     n_plots = length(vars) + 1;  % +1 for legend
@@ -30,6 +30,8 @@ function modelled2measured(modelled, modelled_names, measured, include_i, simula
         n_row = 2;
     end
     n_col = round(n_plots / n_row);
+    min_val = tab.lower(i_mod);
+    max_val = tab.upper(i_mod);
     
     figure(1e9)  % to prevent overlapping with any other figures
     for i = 1:length(vars)
@@ -45,6 +47,7 @@ function modelled2measured(modelled, modelled_names, measured, include_i, simula
         title(sprintf('%s: rmse=%.2f', vars{i}, rmse))
         xlabel('measured')
         ylabel('modelled')
+        axis([min_val(i), max_val(i), min_val(i), max_val(i)])
         hold on
         refline(1, 0)
     end
@@ -53,13 +56,14 @@ function modelled2measured(modelled, modelled_names, measured, include_i, simula
     
     %% final plot with simulation parameters, legend and colorbar
     subplot(n_row, n_col, i + 1)
-    n_fit = length(modelled_names(include_i));
+    fitted_varnames = tab.variable(tab.include);
+    n_fit = length(fitted_varnames);
     x = ones(n_fit, 1);
     y = 1:n_fit;
     % plotting off axis to produce legend
     scatter(-1, -1, 10, 'filled')
     refline(0, -1)
-    text(x, flip(y), modelled_names(include_i), 'HorizontalAlignment', 'center')
+    text(x, flip(y), fitted_varnames, 'HorizontalAlignment', 'center')
     legend('data', '1:1', 'Location', 'bestoutside')
     % axis limits does not allow to show scatter and refline
     axis([0 2 0 n_fit + 1])

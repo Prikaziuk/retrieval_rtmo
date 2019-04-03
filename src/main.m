@@ -171,7 +171,7 @@ for j = c
 end
 
 if ~isempty(path.validation)
-    plot.modelled2measured(parameters, tab.variable, measured.val, tab.include, path.simulation_name)
+    plot.modelled2measured(parameters, tab, measured.val, path.simulation_name)
 end
 
 %% see figures you want
