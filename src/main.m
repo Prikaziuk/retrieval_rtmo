@@ -31,8 +31,8 @@ measured = io.read_measurements(path);
 % measured.refl(i_noise, :) = nan;
 
 % mask noisy HyPlant
-i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
-measured.refl(i_noise, :) = nan;
+% i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
+% measured.refl(i_noise, :) = nan;
 
 % for propagation of uncertainty we need the initial uncertainty
 if isempty(measured.std)
@@ -102,7 +102,7 @@ path = io.create_output_file(input_path, path, measured, tab.variable);
 %% safely writing data from (par)for loop
 q = parallel.pool.DataQueue;
 afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-% afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
 % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
@@ -175,5 +175,5 @@ if ~isempty(path.validation)
 end
 
 %% see figures you want
-% set(figures(5), 'Visible', 'on')
+set(figures(5), 'Visible', 'on')
 
