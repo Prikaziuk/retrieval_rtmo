@@ -63,7 +63,7 @@ function modelled2measured(modelled, tab, measured_tab, simulation_name)
     % plotting off axis to produce legend
     scatter(-1, -1, 10, 'filled')
     refline(0, -1)
-    text(x, flip(y), fitted_varnames, 'HorizontalAlignment', 'center')
+    text(x, flip(y), fitted_varnames, 'HorizontalAlignment', 'center', 'Interpreter', 'none')
     legend('data', '1:1', 'Location', 'bestoutside')
     % axis limits does not allow to show scatter and refline
     axis([0 2 0 n_fit + 1])
