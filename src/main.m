@@ -30,6 +30,10 @@ measured = io.read_measurements(path);
 % i_noise = measured.wl > 1780 & measured.wl < 1950;
 % measured.refl(i_noise, :) = nan;
 
+% mask noisy HyPlant
+i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
+measured.refl(i_noise, :) = nan;
+
 % for propagation of uncertainty we need the initial uncertainty
 if isempty(measured.std)
     measured.std = ones(size(measured.refl)) * 0.01;  % there was stdP but no point yet
@@ -68,6 +72,9 @@ end
 
 angles_single = helpers.get_angles(sensor, sun);
 if sensor.timeseries
+    warning(['You have activated `time_series` mode.\n'... 
+        'Parameters will be read from `TimeSeries` sheet. ' ... 
+        'If you did not provide anything there fixed values from `Filenames` will be used.'], '')
     tab_ts = io.read_filenames_sheet(input_path, 'TimeSeries');
     path_ts = io.table_to_struct(tab_ts, 'path_ts');
     sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, length(c));
@@ -84,6 +91,7 @@ n_fit_wl = sum(measured.i_fit);
 
 [parameters, parameters_std] = deal(zeros(n_params, n_spectra));
 rmse_all = zeros(n_spectra, 1);
+figures = gobjects(n_spectra,1);
 [refl_mod, refl_soil] = deal(zeros(n_wl, n_spectra));
 [sif_rad, sif_norm] = deal(zeros(n_wlF, n_spectra));  % n_wlF
 J_all = zeros(n_fit_wl, n_params, n_spectra);
@@ -94,7 +102,7 @@ path = io.create_output_file(input_path, path, measured, tab.variable);
 %% safely writing data from (par)for loop
 q = parallel.pool.DataQueue;
 afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+% afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
 % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
@@ -104,6 +112,14 @@ afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 % %     parallel.defaultClusterProfile(prof);
 %     parpool(N_proc);
 % end
+
+%% time estimation
+if ~exist('N_proc', 'var')
+    N_proc = 1;
+end
+eta = n_spectra * 5 / (N_proc * 60);
+warning(['You have %d spectra and asked for %d CPU(s). '...
+    'Fitting will take about %.2f min (~5 s / spectra / CPU)'], n_spectra, N_proc, eta)
 
 %% fitting
 %% change to parfor if you like
@@ -128,7 +144,7 @@ for j = c
     % ..\data\measured\airborne\Hyplant_refl.txt, first spectra
     known_res_hyplant_prior_e_3 = [0.5000   25.0000   45.0000   30.0000   41.6531   12.1656    2.6713    0.0035    0.1623    0.6000    3.5000    2.5646    0.9942   -0.0029         0         0         0         0]';
     known_res_hyplant_e_3 =       [0.5000   25.0000   45.0000   30.0000   40.5414   13.4927    4.1961    0.0045    0.1694    0.6000    3.4985    2.9241    0.9981    0.0009         0         0         0         0]';
-    [known_res_hyplant_prior_e_3, known_res_hyplant_e_3, results_j.parameters]  
+%     [known_res_hyplant_prior_e_3, known_res_hyplant_e_3, results_j.parameters]  
 
     %% record to keep in the workspace
 
@@ -146,12 +162,18 @@ for j = c
     
     parameters_std(:, j) = uncertainty_j.std_params;
     J_all(:,:,j) = uncertainty_j.J;
-
+    
+    figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
+    
     %% send data to write and plot
     send(q, {j, results_j, uncertainty_j, measurement})  
 
 end
 
 if ~isempty(path.validation)
-    plot.modelled2measured(parameters, tab.variable, measured.val)
+    plot.modelled2measured(parameters, tab.variable, measured.val, tab.include, path.simulation_name)
 end
+
+%% see figures you want
+% set(figures(5), 'Visible', 'on')
+

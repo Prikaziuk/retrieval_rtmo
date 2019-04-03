@@ -1,5 +1,7 @@
-*.nc
+*.asv
 src/+local/
 output/*
 measured/*
-~$Input_data.xlsx
+src/~$Input_data.xlsx
+src/Input_data.xlsx
+
