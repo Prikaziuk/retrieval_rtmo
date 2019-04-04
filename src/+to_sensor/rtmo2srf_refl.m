@@ -30,7 +30,7 @@ function refl_band = cut_to_srfs(refl, wl_refl, sensor)
         i_nans = isnan(i_wlP(:, i));
         i_refl = i_wlP(~i_nans, i);
         resp_band = resp(~i_nans, i);
-        refl_band(i) = sum(refl(i_refl) .* resp_band) / sum(resp_band);
+        refl_band(i) = nansum(refl(i_refl) .* resp_band) / nansum(resp_band);
     end
 end
 

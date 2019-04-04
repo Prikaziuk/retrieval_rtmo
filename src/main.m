@@ -45,25 +45,37 @@ irradiance = io.read_irradiance(path);
 
 %% subset irradiance to measurements (FWHM, SRF)
 
-if isempty(sensor.instrument_name)
-    instrument.wl = measured.wl;
-    instrument.FWHM = repmat(sensor.FWHM, size(measured.wl));
+if any(strcmp(sensor.instrument_name, fixed.srf_sensors))  % to srf
+    instrument.wl = spectral.wlP';
+    instrument.FWHM = ones(size(instrument.wl));
     instrument = struct2table(instrument);
+    [~, ~, sensor.i_srf] = sat.read_bands_sheet(input_path);
+    assert(length(measured.wl) == length(sensor.i_srf), ['Wrong `instrument_name` or '... 
+        'wrong number of bands (`your_names`) at `Bands` sheet.\n'... 
+        '[different number of measured wavelength and srf]'], '')
+    sensor.srf = sat.read_srf_1nm(sensors_path, sensor.instrument_name, sensor.i_srf); 
+    irr_meas = to_sensor.irradiance2sensor_wl(irradiance, instrument,  spectral.wlP');
+    measured.i_sif = ones(size(spectral.wlF'));
 else
-    instrument_name = sensor.instrument_name;
-    [~, sheets] = xlsfinfo(sensors_path);
-    assert(any(strcmp(instrument_name, sheets)), ['instrument_name `%s` '...
-        'does not correspond to any of sheet names in `%s`.\n' ...
-        'If you want to use your FWHM - do not provide any value as instrument_name'], ...
-        instrument_name, sensors_path)
-    instrument = readtable(sensors_path, 'sheet', instrument_name);
+    if isempty(sensor.instrument_name)                     % to custom FWHM
+        instrument.wl = measured.wl;
+        instrument.FWHM = repmat(sensor.FWHM, size(measured.wl));
+        instrument = struct2table(instrument);
+    else                                                   % to built-in FWHM      
+        instrument_name = sensor.instrument_name;
+        [~, sheets] = xlsfinfo(sensors_path);
+        assert(any(strcmp(instrument_name, sheets)), ['instrument_name `%s` '...
+            'does not correspond to any of sheet names in `%s`.\n' ...
+            'If you want to use your FWHM - do not provide any value as instrument_name'], ...
+            instrument_name, sensors_path)
+        instrument = readtable(sensors_path, 'sheet', instrument_name);
+    end
+    irr_meas = to_sensor.irradiance2sensor_wl(irradiance, instrument,  measured.wl);
+    measured.i_sif = (measured.wl >= spectral.wlF(1)) & (measured.wl <= spectral.wlF(end));
 end
-
-irr_meas = to_sensor.irradiance2sensor_wl(irradiance, instrument,  measured.wl);
 
 %% other sensor-related input
 measured.i_fit = (measured.wl >= sensor.wlmin) & (measured.wl <= sensor.wlmax);
-measured.i_sif = (measured.wl >= spectral.wlF(1)) & (measured.wl <= spectral.wlF(end));
 
 c = sensor.c;
 if c == -999
@@ -171,7 +183,8 @@ for j = c
 end
 
 if ~isempty(path.validation)
-    plot.modelled2measured(parameters, tab, measured.val, path.simulation_name)
+    graph_name = [path.simulation_name, ' ', sensor.instrument_name];
+    plot.modelled2measured(parameters, tab, measured.val, graph_name)
 end
 
 %% see figures you want

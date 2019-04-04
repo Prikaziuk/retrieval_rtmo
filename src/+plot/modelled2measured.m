@@ -1,4 +1,4 @@
-function modelled2measured(modelled, tab, measured_tab, simulation_name)
+function modelled2measured(modelled, tab, measured_tab, graph_name)
 
     measured_names = table2array(measured_tab(:, 1));
     measured_tab(:, 1) = [];
@@ -52,7 +52,8 @@ function modelled2measured(modelled, tab, measured_tab, simulation_name)
         refline(1, 0)
     end
     
-    suptitle(simulation_name)
+    h = suptitle(graph_name);
+    set(h,'Interpreter', 'none')
     
     %% final plot with simulation parameters, legend and colorbar
     subplot(n_row, n_col, i + 1)
