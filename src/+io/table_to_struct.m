@@ -34,7 +34,7 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
         % expected names from filenames sheet
         variable_names.path = [common_path, {'reflectance', 'reflectance_std', 'reflectance_wl', 'skip_lines', 'validation'}];                
         variable_names.sensor = [common_sensor, {'c', 'FWHM', 'wlmin', 'wlmax', 'timeseries'}];
-        variable_names.sun = {'lat', 'lon', 'datetime', 'tz', 'summertime'};
+        variable_names.sun = {'lat', 'lon', 'datetime', 'tz'};
     end
     
     variable_names.path_ts = {'tts_path', 'tto_path', 'psi_path', 'datetime_path', 'Rin_path'};
@@ -63,6 +63,10 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
         end
         if isnan(value)
             value = '';
+        end
+        if contains(struct_name, 'path')
+            val_split = strsplit(value, {'/','\'});
+            value = fullfile(val_split{:});
         end
         structure.(name) = value;
     end

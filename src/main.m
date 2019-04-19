@@ -10,8 +10,8 @@ fixed = io.read_fixed_input();
 spectral = fixed.spectral;
 
 %% read input file
-sensors_path = fullfile('../input/sensors.xlsx');
-input_path = fullfile('Input_data.xlsx');
+sensors_path = fullfile('..', 'input', 'sensors.xlsx');
+input_path = 'Input_data.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -27,12 +27,12 @@ path.input_path = input_path;
 measured = io.read_measurements(path);
 
 % mask atmospheric window
-% i_noise = measured.wl > 1780 & measured.wl < 1950;
-% measured.refl(i_noise, :) = nan;
+i_noise = measured.wl > 1780 & measured.wl < 1950;
+measured.refl(i_noise, :) = nan;
 
 % mask noisy HyPlant
-i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
-measured.refl(i_noise, :) = nan;
+% i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
+% measured.refl(i_noise, :) = nan;
 
 % for propagation of uncertainty we need the initial uncertainty
 if isempty(measured.std)
@@ -89,8 +89,9 @@ if sensor.timeseries
         'If you did not provide anything there fixed values from `Filenames` will be used.'], '')
     tab_ts = io.read_filenames_sheet(input_path, 'TimeSeries');
     path_ts = io.table_to_struct(tab_ts, 'path_ts');
-    sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, length(c));
-    sensor.Rin_ts = ts.get_Rin_ts(path_ts.Rin_path, sensor.Rin, length(c));
+    n_spectra = size(measured.refl, 2);
+    sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, n_spectra);
+    sensor.Rin_ts = ts.get_Rin_ts(path_ts.Rin_path, sensor.Rin, n_spectra);
 end
 
 %% preallocate output structures
@@ -102,28 +103,45 @@ n_wlF = sum(measured.i_sif);
 n_fit_wl = sum(measured.i_fit);
 
 [parameters, parameters_std] = deal(zeros(n_params, n_spectra));
-rmse_all = zeros(n_spectra, 1);
+rmse_all = zeros(1, n_spectra);
 figures = gobjects(n_spectra,1);
 [refl_mod, refl_soil] = deal(zeros(n_wl, n_spectra));
 [sif_rad, sif_norm] = deal(zeros(n_wlF, n_spectra));  % n_wlF
 J_all = zeros(n_fit_wl, n_params, n_spectra);
 
 %% start saving
-path = io.create_output_file(input_path, path, measured, tab.variable);
+% path = io.create_output_file(input_path, path, measured, tab.variable);
+path = io.create_output_folder(input_path, path, tab.variable);
+
+tmp_zeros_res.rmse = rmse_all;
+tmp_zeros_res.parameters = parameters;
+tmp_zeros_unc.std_params = parameters_std;
+
+tmp_zeros_res.refl_mod = refl_mod;
+tmp_zeros_res.soil_mod = refl_soil;
+tmp_zeros_res.sif = sif_rad;
+tmp_zeros_res.sif_norm = sif_norm;
+
+tmp_zeros_meas.refl = refl_mod;
+tmp_zeros_meas.wl = measured.wl;
+tmp_zeros_meas.i_sif = measured.i_sif;
+
+io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
 
 %% safely writing data from (par)for loop
 q = parallel.pool.DataQueue;
-afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+% afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
 % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
-% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-% N_proc = 3;
-% if isempty(gcp('nocreate'))
-% %     prof = parallel.importProfile('local_Copy.settings');
-% %     parallel.defaultClusterProfile(prof);
-%     parpool(N_proc);
-% end
+%% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
+N_proc = 3;
+if isempty(gcp('nocreate'))
+%     prof = parallel.importProfile('local_Copy.settings');
+%     parallel.defaultClusterProfile(prof);
+    parpool(N_proc);
+end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -179,6 +197,8 @@ for j = c
     
     %% send data to write and plot
     send(q, {j, results_j, uncertainty_j, measurement})  
+%     send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
+%     io.save_output_csv(rmse_all, parameters, parameters_std, path)
 
 end
 

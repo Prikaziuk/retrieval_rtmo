@@ -5,7 +5,7 @@ function [refl_band, soil_band, fluo] = rtmo2srf_refl(rad, SIF, soil_refl, wlP, 
     rsd     = rad.rsd;
     SIFs    = SIF;
 
-    [Esun_, Esky_, E_int] = helpers.transmittances2irradiance(irr_prospect, rdd, rsd, sensor.Rin);
+    [Esun_, Esky_, E_int] = equations.transmittances2irradiance(irr_prospect, rdd, rsd, sensor.Rin);
     
     piL_    = rso .* Esun_ + rdo .* Esky_ + SIFs;
     refl    = piL_ ./ (Esun_ + Esky_);

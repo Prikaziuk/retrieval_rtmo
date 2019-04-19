@@ -6,7 +6,7 @@ function angles = get_angles(sensor, sun)
     
     if isempty(sensor.tts)
         warning('Solar zenith angle will be calculated based on lat, lon, datetime, other angles keep nadir')
-        solar_angles = helpers.solarPosition(sun.datetime, sun.lat, sun.lon, sun.tz, 0, sun.summertime);
+        solar_angles = equations.solarPosition(sun.datetime, sun.lat, sun.lon, sun.tz, 0, 0);
         angles.tts = solar_angles(1);
         angles.tto = 0;
         angles.psi = 0;

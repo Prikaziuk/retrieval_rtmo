@@ -50,7 +50,7 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     canopy.litab    = [ 5:10:75 81:2:89 ]';   % a column, never change the angles unless 'ladgen' is also adapted
     canopy.lazitab  = ( 5:10:355 );           % a row
     canopy.hot      = sensor.hot;
-    canopy.lidf     = helpers.leafangles(canopy.LIDFa, canopy.LIDFb); 
+    canopy.lidf     = equations.leafangles(canopy.LIDFa, canopy.LIDFb); 
 
     rad   = models.RTMo_lite(soil, leafopt, canopy, angles);
     

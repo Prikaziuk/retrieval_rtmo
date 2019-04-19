@@ -7,11 +7,11 @@ function fixed = read_fixed_input()
     spectral.wlF = 640:1:850;                       % chlorophyll fluorescence in E-F matrix
 
     %% fixed input for SIF simulation with PCA
-    PCflu = xlsread(fullfile('..\input\PC_flu.xlsx'));
+    PCflu = xlsread(fullfile('..', 'input', 'PC_flu.xlsx'));
     pcf   = PCflu(2:end, 2:5);
 
     %% fixed input for FLUSPECT and BSM
-    optipar = load(fullfile('../input/fluspect_data/Optipar2017_ProspectD'));
+    optipar = load(fullfile('..', 'input', 'fluspect_data', 'Optipar2017_ProspectD'));
     
     %% collect
     

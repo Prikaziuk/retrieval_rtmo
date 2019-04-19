@@ -6,7 +6,7 @@ function [angles, Rin] = ts_for_parfor(j, sensor)
     if isempty(sensor.Rin_ts)
         Rin = sensor.Rin;
     else
-        sensor.Rin = sensor.Rin_ts(j);
+        Rin = sensor.Rin_ts(j);
     end
         
 end

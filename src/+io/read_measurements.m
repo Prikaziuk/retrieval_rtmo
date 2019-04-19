@@ -2,9 +2,7 @@ function measured = read_measurements(path)
 
     
     measured.refl = io.read_dat(path.reflectance);
-%     measured.wl = io.read_dat(path.reflectance_wl);  % matlab can't guess # header lines for single
-%     column files
-    measured.wl = load(fullfile(path.reflectance_wl));
+    measured.wl = io.read_dat(path.reflectance_wl);
 
     assert(size(measured.refl, 1) == size(measured.wl, 1), ...
           'wavelength and reflectance number of rows do not match')
@@ -17,7 +15,7 @@ function measured = read_measurements(path)
     end
     
     if ~isempty(path.validation)
-        measured.val = readtable(fullfile(path.validation), 'TreatAsEmpty',{'NA'});
+        measured.val = readtable(path.validation, 'TreatAsEmpty',{'NA'});
         n_spectra = size(measured.refl, 2);
         n_validation = size(measured.val, 2) - 1;
         assert(n_spectra == n_validation, ['the number of measured spectra (%d) ' ... 

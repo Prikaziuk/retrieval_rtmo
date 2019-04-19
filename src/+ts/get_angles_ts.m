@@ -7,7 +7,7 @@ function angles = get_angles_ts(sensor, sun, path_ts, n_spectra)
     if ~isempty(path_ts.datetime_path)
         datetime = io.read_datetime(path_ts.datetime_path);
         assert_equal_length(datetime, n_spectra, path_ts.datetime_path)
-        angs = helpers.solarPosition(datetime, sun.lat, sun.lon, sun.tz, 0, sun.summertime);
+        angs = equations.solarPosition(datetime, sun.lat, sun.lon, sun.tz, 0, 0);
         angles.tts = angs(:, 1)';
         angles.tto = 0;
         angles.psi = 0;
