@@ -1,5 +1,12 @@
-function modelled2measured(modelled, tab, measured_tab, graph_name)
+function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
 
+    %% to fill or not to fill (to make number visible)
+    filled = true;
+    if nargin < 5
+        filled = false;
+    end
+    
+    %% check names
     measured_names = table2array(measured_tab(:, 1));
     measured_tab(:, 1) = [];
     names = measured_tab.Properties.VariableNames;
@@ -9,7 +16,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name)
     names_spl = split(names, '_');                      % split column headers by '_'
     [groups, ~, group_id] = unique(names_spl(:,:, 1));  % see if there is any logic behind colnames
     n_spectra = size(measured, 2);
-    if length(groups) < n_spectra
+    if filled % length(groups) < n_spectra
         n_colors = length(groups);
         color_names = groups;
         scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id, 'filled');
@@ -43,8 +50,20 @@ function modelled2measured(modelled, tab, measured_tab, graph_name)
             text(meas(j), mod(j), num2str(j), 'HorizontalAlignment', 'center')
             hold on
         end
+        % liner model
+        i_nans = isnan(meas);
+        lm_full = fitlm(meas(~i_nans), mod(~i_nans));   
+        lm = polyfit(meas(~i_nans), mod(~i_nans), 1);
+        fit = polyval(lm, meas);
+        plot(meas, fit, 'r:')  % refline(lm(1), lm(2))
+        % metrics
         rmse = sqrt(nanmean((meas-mod) .^ 2));
-        title(sprintf('%s: rmse=%.2f', vars{i}, rmse))
+        bias = nanmean(meas-mod);
+        r2 = corrcoef(meas(~i_nans), mod(~i_nans)); 
+        r2 = r2(1, 2) .^ 2;  % lm_full.Rsquared.Ordinary
+        
+        title(sprintf('%s \n rmse=%.2f, bias=%.2f, \\color{red}r^2=%.2f, r^2adj=%.2f', ...
+            vars{i}, rmse, bias, r2, lm_full.Rsquared.Adjusted))
         xlabel('measured')
         ylabel('modelled')
         axis([min_val(i), max_val(i), min_val(i), max_val(i)])

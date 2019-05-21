@@ -13,7 +13,7 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
                         'lat', 'lon', 'tz', 'summertime', ...
                         'Rin', 'c', 'FWHM', 'wlmin', 'wlmax', 'skip_lines', 'timeseries'};
                     
-    optional = {'skip_lines', 'tts', 'reflectance_std', 'validation', 'Rin', ...
+    optional = {'skip_lines', 'tts', 'reflectance_std', 'validation', 'Rin', 'soilfile', ...
                 'Esun', 'Esky', 'atmfile', ...
                 'tts_path', 'tto_path', 'psi_path', 'datetime_path', 'Rin_path', 'instrument_name'};
 
@@ -23,7 +23,7 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
     variable_names.canopy = {'LAI', 'LIDFa', 'LIDFb'};
     variable_names.sif = {'SIF_PC1', 'SIF_PC2', 'SIF_PC3', 'SIF_PC4'};
     
-    common_path = {'output_path', 'simulation_name', 'Esun', 'Esky', 'atmfile'};
+    common_path = {'output_path', 'simulation_name', 'Esun', 'Esky', 'atmfile', 'soilfile'};
     common_sensor = {'instrument_name', 'tts', 'tto', 'psi', 'hot', 'Rin'};
     if is_satellite
         % expected names from satellite sheet

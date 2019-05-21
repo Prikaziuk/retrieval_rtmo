@@ -26,9 +26,14 @@ path.input_path = input_path;
 %% read reflectance
 measured = io.read_measurements(path);
 
+if ~isempty(path.soilfile)
+    warning('Reading soil spectra from `%s` file', path.soilfile)
+    measured.soil_refl = load(path.soilfile);
+end
+
 % mask atmospheric window
-i_noise = measured.wl > 1780 & measured.wl < 1950;
-measured.refl(i_noise, :) = nan;
+% i_noise = measured.wl > 1780 & measured.wl < 1950;
+% measured.refl(i_noise, :) = nan;
 
 % mask noisy HyPlant
 % i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
@@ -153,7 +158,7 @@ warning(['You have %d spectra and asked for %d CPU(s). '...
 
 %% fitting
 %% change to parfor if you like
-for j = c
+parfor j = c
      fprintf('%d / %d', j, length(c))
     %% this part is done like it is to enable parfor loop
     measurement = struct();
@@ -161,6 +166,10 @@ for j = c
     measurement.i_fit = measured.i_fit;
     measurement.wl = measured.wl;
     measurement.i_sif = measured.i_sif;
+    if isfield(measured, 'soil_refl')
+%         measurement.soil_refl = measured.soil_refl;
+        measurement.soil_refl = interp1(measurement.wl, measured.soil_refl, spectral.wlP, 'splines', 1E-4);
+    end
     
     angles = angles_single;
     sensor_in = sensor;
