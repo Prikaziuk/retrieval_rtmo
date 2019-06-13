@@ -30,6 +30,9 @@ measured = io.read_measurements(path);
 % i_noise = measured.wl > 1780 & measured.wl < 1950;
 % measured.refl(i_noise, :) = nan;
 
+i_noise = (measured.wl > 1350 & measured.wl < 1430) | (measured.wl > 1805 & measured.wl < 1975) | measured.wl > 2400;
+measured.refl(i_noise, :) = nan;
+
 % mask noisy HyPlant
 % i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
 % measured.refl(i_noise, :) = nan;
@@ -106,12 +109,12 @@ afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
 % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-% N_proc = 3;
-% if isempty(gcp('nocreate'))
-% %     prof = parallel.importProfile('local_Copy.settings');
-% %     parallel.defaultClusterProfile(prof);
-%     parpool(N_proc);
-% end
+N_proc = 3;
+if isempty(gcp('nocreate'))
+%     prof = parallel.importProfile('local_Copy.settings');
+%     parallel.defaultClusterProfile(prof);
+    parpool(N_proc);
+end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -123,7 +126,7 @@ warning(['You have %d spectra and asked for %d CPU(s). '...
 
 %% fitting
 %% change to parfor if you like
-for j = c
+parfor j = c
      fprintf('%d / %d', j, length(c))
     %% this part is done like it is to enable parfor loop
     measurement = struct();
@@ -171,9 +174,25 @@ for j = c
 end
 
 if ~isempty(path.validation)
-    plot.modelled2measured(parameters, tab.variable, measured.val, tab.include, path.simulation_name)
+    plot.modelled2measured(parameters, measured.val, tab, path.simulation_name)
 end
 
 %% see figures you want
 set(figures(5), 'Visible', 'on')
+
+%% plot from the output file
+
+% [wl, meas, mod, rmse, params, tab] = io.read_output(path.xlsx_path);
+% 
+% for j=32  % 1:size(meas, 2)
+%     meas_j = meas(:, j);
+%     mod_j = mod(:, j);
+%     rmse_j = rmse(:, j);
+%     plot.reflectance(wl, meas_j, mod_j, j, rmse_j)
+% end
+% % close all
+% 
+% validation = readtable(path.validation, 'TreatAsEmpty',{'NA'});
+% plot.modelled2measured(params, validation, tab, 'validation')
+
 

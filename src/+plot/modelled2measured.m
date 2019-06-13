@@ -1,9 +1,16 @@
-function modelled2measured(modelled, modelled_names, measured, include_i, simulation_name)
-
-    measured_names = table2array(measured(:, 1));
-    measured(:, 1) = [];
-    names = measured.Properties.VariableNames;
-    measured = table2array(measured);
+function modelled2measured(modelled, measured_tab, tab, graph_name)
+    
+    %% measured data from table to matrix, keep names 
+    measured_names = table2array(measured_tab(:, 1));
+    measured_tab(:, 1) = [];
+    names = measured_tab.Properties.VariableNames;
+    measured = table2array(measured_tab);
+    
+    %% modelled names and ranges
+    modelled_names = tab.variable;
+    include_i = tab.include;
+    lower = tab.lower;
+    upper = tab.upper;
 
     %% find groups based on column names
     names_spl = split(names, '_');                      % split column headers by '_'
@@ -42,14 +49,25 @@ function modelled2measured(modelled, modelled_names, measured, include_i, simula
             hold on
         end
         rmse = sqrt(nanmean((meas-mod) .^ 2));
-        title(sprintf('%s: rmse=%.2f', vars{i}, rmse))
+        lm = fitlm(meas, mod);
+        bias = nanmean(mod - meas);
+        title(sprintf('%s\n%.2f (rmse), %.2f (bias), \\color{red}%.2f (r^2adj)',...
+            vars{i}, rmse, bias, lm.Rsquared.Adjusted))
         xlabel('measured')
         ylabel('modelled')
         hold on
         refline(1, 0)
+        axis([lower(i_mod(i)), upper(i_mod(i)), lower(i_mod(i)), upper(i_mod(i))])
     end
     
-    suptitle(simulation_name)
+    if verLessThan('matlab', '9.5')
+        V = ver;
+        if any(strcmp({V.Name}, 'Bioinformatics Toolbox'))
+            suptitle(graph_name)
+        end
+    else
+        sgtitle(graph_name)
+    end
     
     %% final plot with simulation parameters, legend and colorbar
     subplot(n_row, n_col, i + 1)

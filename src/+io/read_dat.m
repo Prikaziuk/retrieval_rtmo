@@ -9,7 +9,7 @@ function matrix = read_dat(file_path, skip_lines_custom)
 
     opt = detectImportOptions(file_path);
     sep = opt.Delimiter{1};
-    skip_lines = opt.DataLine - 1;  % because we want to read starting from DataLine
+    skip_lines = opt.DataLine(1) - 1;  % because we want to read starting from DataLine
     
     if nargin == 2
         if skip_lines ~= skip_lines_custom
@@ -25,6 +25,11 @@ function matrix = read_dat(file_path, skip_lines_custom)
             'because matlab thinks they have headers'], skip_lines, file_path)
     end
     
-    matrix = dlmread(file_path, sep, skip_lines, 0);
-    
+    try
+        matrix = dlmread(file_path, sep, skip_lines, 0);
+    catch
+        warning('Trying to read `%s` file as table, dlmread() failed', file_path)
+        tab =  readtable(file_path, 'TreatAsEmpty',{'NA'});
+        matrix = table2array(tab);
+    end
 end

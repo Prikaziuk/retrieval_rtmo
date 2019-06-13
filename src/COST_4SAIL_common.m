@@ -56,7 +56,7 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     
     %% canopy fluorescence from PCA, in W m-2 sr-1
     SIF = zeros(length(spectral.wlP),1);
-    SIF(640-399:850-399)   = pcf * struct2array(wpcf)';
+    SIF(640-399:850-399)   = pcf * cell2mat(struct2cell(wpcf));
     rad.SIF = SIF(640-399:850-399);
 
     %% canopy reflectance in measurements wl
