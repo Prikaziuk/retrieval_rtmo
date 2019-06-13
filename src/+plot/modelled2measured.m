@@ -1,25 +1,34 @@
 function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
 
     %% to fill or not to fill (to make number visible)
-    filled = true;
     if nargin < 5
         filled = false;
     end
     
-    %% check names
+    %% measured data from table to matrix, keep names 
     measured_names = table2array(measured_tab(:, 1));
     measured_tab(:, 1) = [];
     names = measured_tab.Properties.VariableNames;
     measured = table2array(measured_tab);
+    
+    %% modelled names and ranges
+%     modelled_names = tab.variable;
+%     include_i = tab.include;
+%     lower = tab.lower;
+%     upper = tab.upper;
 
     %% find groups based on column names
     names_spl = split(names, '_');                      % split column headers by '_'
     [groups, ~, group_id] = unique(names_spl(:,:, 1));  % see if there is any logic behind colnames
     n_spectra = size(measured, 2);
-    if filled % length(groups) < n_spectra
+    if length(groups) < n_spectra % filled
         n_colors = length(groups);
         color_names = groups;
-        scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id, 'filled');
+        if filled
+            scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id, 'filled');
+        else
+            scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id);
+        end
     else
         n_colors = n_spectra;
         group_id = 1:n_colors;
@@ -58,21 +67,24 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         plot(meas, fit, 'r:')  % refline(lm(1), lm(2))
         % metrics
         rmse = sqrt(nanmean((meas-mod) .^ 2));
-        bias = nanmean(meas-mod);
-        r2 = corrcoef(meas(~i_nans), mod(~i_nans)); 
-        r2 = r2(1, 2) .^ 2;  % lm_full.Rsquared.Ordinary
-        
-        title(sprintf('%s \n rmse=%.2f, bias=%.2f, \\color{red}r^2=%.2f, r^2adj=%.2f', ...
-            vars{i}, rmse, bias, r2, lm_full.Rsquared.Adjusted))
+        bias = nanmean(mod - meas);
+        title(sprintf('%s\n%.2f (rmse), %.2f (bias), \\color{red}%.2f (r^2adj)',...
+            vars{i}, rmse, bias, lm_full.Rsquared.Adjusted))
         xlabel('measured')
         ylabel('modelled')
-        axis([min_val(i), max_val(i), min_val(i), max_val(i)])
         hold on
         refline(1, 0)
+        axis([min_val(i), max_val(i), min_val(i), max_val(i)])
     end
     
-    h = suptitle(graph_name);
-    set(h,'Interpreter', 'none')
+    if verLessThan('matlab', '9.5')
+        V = ver;
+        if any(strcmp({V.Name}, 'Bioinformatics Toolbox'))
+            suptitle(graph_name)
+        end
+    else
+        sgtitle(graph_name)
+    end
     
     %% final plot with simulation parameters, legend and colorbar
     subplot(n_row, n_col, i + 1)
@@ -89,9 +101,12 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
     axis([0 2 0 n_fit + 1])
     title('These variables where tuned')
     
-    colormap(jet(n_colors))
-    caxis([1, n_colors])
-    colorbar('YTick', 1 + 0.5*(n_colors-1)/n_colors:(n_colors-1)/n_colors:n_colors, ...
-             'YTickLabel', color_names)
+    if n_colors > 1
+        colormap(jet(n_colors))
+        caxis([1, n_colors])
+        colorbar('YTick', 1 + 0.5*(n_colors-1)/n_colors:(n_colors-1)/n_colors:n_colors, ...
+                 'YTickLabel', color_names)
+    end
+         
 
 end

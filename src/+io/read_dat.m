@@ -15,7 +15,7 @@ function matrix = read_dat(file_path, skip_lines_custom)
         end
         opt = detectImportOptions(file_path);
         sep = opt.Delimiter{1};
-        skip_lines = opt.DataLine - 1;  % because we want to read starting from DataLine
+        skip_lines = opt.DataLine(1) - 1;  % because we want to read starting from DataLine
 
         if nargin == 2
             if skip_lines ~= skip_lines_custom
@@ -36,6 +36,4 @@ function matrix = read_dat(file_path, skip_lines_custom)
                         'TreatAsEmpty', {'', 'NA', 'N/A'});
         matrix = table2array(data);
     end
-
-    
 end

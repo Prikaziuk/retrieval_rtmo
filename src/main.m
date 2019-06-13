@@ -35,6 +35,9 @@ end
 % i_noise = measured.wl > 1780 & measured.wl < 1950;
 % measured.refl(i_noise, :) = nan;
 
+i_noise = (measured.wl > 1350 & measured.wl < 1430) | (measured.wl > 1805 & measured.wl < 1975) | measured.wl > 2400;
+measured.refl(i_noise, :) = nan;
+
 % mask noisy HyPlant
 % i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
 % measured.refl(i_noise, :) = nan;
@@ -115,38 +118,41 @@ figures = gobjects(n_spectra,1);
 J_all = zeros(n_fit_wl, n_params, n_spectra);
 
 %% start saving
-% path = io.create_output_file(input_path, path, measured, tab.variable);
-path = io.create_output_folder(input_path, path, tab.variable);
+q = parallel.pool.DataQueue;
+if isunix
+    path = io.create_output_folder(input_path, path, tab.variable);
 
-tmp_zeros_res.rmse = rmse_all;
-tmp_zeros_res.parameters = parameters;
-tmp_zeros_unc.std_params = parameters_std;
+    tmp_zeros_res.rmse = rmse_all;
+    tmp_zeros_res.parameters = parameters;
+    tmp_zeros_unc.std_params = parameters_std;
 
-tmp_zeros_res.refl_mod = refl_mod;
-tmp_zeros_res.soil_mod = refl_soil;
-tmp_zeros_res.sif = sif_rad;
-tmp_zeros_res.sif_norm = sif_norm;
+    tmp_zeros_res.refl_mod = refl_mod;
+    tmp_zeros_res.soil_mod = refl_soil;
+    tmp_zeros_res.sif = sif_rad;
+    tmp_zeros_res.sif_norm = sif_norm;
 
-tmp_zeros_meas.refl = refl_mod;
-tmp_zeros_meas.wl = measured.wl;
-tmp_zeros_meas.i_sif = measured.i_sif;
+    tmp_zeros_meas.refl = refl_mod;
+    tmp_zeros_meas.wl = measured.wl;
+    tmp_zeros_meas.i_sif = measured.i_sif;
 
-io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
+    io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
+    afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
+else
+    path = io.create_output_file(input_path, path, measured, tab.variable);
+    afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+end
 
 %% safely writing data from (par)for loop
-q = parallel.pool.DataQueue;
-% afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
 % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
 %% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-N_proc = 3;
-if isempty(gcp('nocreate'))
-%     prof = parallel.importProfile('local_Copy.settings');
-%     parallel.defaultClusterProfile(prof);
-    parpool(N_proc);
-end
+% N_proc = 3;
+% if isempty(gcp('nocreate'))
+% %     prof = parallel.importProfile('local_Copy.settings');
+% %     parallel.defaultClusterProfile(prof);
+%     parpool(N_proc);
+% end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -158,7 +164,7 @@ warning(['You have %d spectra and asked for %d CPU(s). '...
 
 %% fitting
 %% change to parfor if you like
-parfor j = c
+for j = c
      fprintf('%d / %d', j, length(c))
     %% this part is done like it is to enable parfor loop
     measurement = struct();
@@ -213,9 +219,33 @@ end
 
 if ~isempty(path.validation)
     graph_name = [path.simulation_name, ' ', sensor.instrument_name];
-    plot.modelled2measured(parameters, tab, measured.val, graph_name)
+    n_val = size(measured.val, 2) - 1;
+    if length(c) < n_val
+        % this ploting is not designed for one value but we hack
+        % it to do so for you
+        val = measured.val(1, [1 c + 1]);
+        parameters = parameters(:, c);
+    end
+    plot.modelled2measured(parameters, tab, val, graph_name)
 end
 
 %% see figures you want
-% set(figures(5), 'Visible', 'on')
+set(figures(5), 'Visible', 'on')
+
+%% plot from the output xlsx file
+
+% your_output_xlsx_file = path.xlsx_path;
+% [wl, meas, mod, rmse, params, tab] = io.read_output(your_output_xlsx_file);
+% 
+% for j=32  % 1:size(meas, 2)
+%     meas_j = meas(:, j);
+%     mod_j = mod(:, j);
+%     rmse_j = rmse(:, j);
+%     plot.reflectance(wl, meas_j, mod_j, j, rmse_j)
+% end
+% % close all
+% 
+% validation = readtable(path.validation, 'TreatAsEmpty',{'NA'});
+% plot.modelled2measured(params, tab, validation, 'validation')
+
 
