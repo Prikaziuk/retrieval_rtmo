@@ -37,8 +37,13 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     soilspec.GSV  = optipar.GSV;
     soilspec.kw   = optipar.Kw;
     soilspec.nw   = optipar.nw;
-
-    soil.refl      = models.BSM(soilpar, soilspec, soilemp);
+    
+    if isfield(measurement, 'soil_refl')
+        soil.refl = measurement.soil_refl;
+%         soil.refl = interp1(measurement.wl, measurement.soil_refl, spectral.wlP, 'splines', 1E-4);
+    else
+        soil.refl = models.BSM(soilpar, soilspec, soilemp);
+    end
 
     %% canopy reflectance factors - RTMo
     canopy.nlayers  = 60;
@@ -50,7 +55,7 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     canopy.litab    = [ 5:10:75 81:2:89 ]';   % a column, never change the angles unless 'ladgen' is also adapted
     canopy.lazitab  = ( 5:10:355 );           % a row
     canopy.hot      = sensor.hot;
-    canopy.lidf     = helpers.leafangles(canopy.LIDFa, canopy.LIDFb); 
+    canopy.lidf     = equations.leafangles(canopy.LIDFa, canopy.LIDFb); 
 
     rad   = models.RTMo_lite(soil, leafopt, canopy, angles);
     

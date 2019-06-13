@@ -7,7 +7,7 @@ function [refl, soil_refl, fluo] = rtmo2measured_refl(rad, SIF, soil_refl, wlP, 
     rsd     = interp1(wlP, rad.rsd, measurement.wl, 'splines', 1E-4);
     SIFs    = interp1(wlP, SIF, measurement.wl, 'splines', 1E-4);
 
-    [Esun_, Esky_, Eint] = helpers.transmittances2irradiance(irr_meas, rdd, rsd, Rin);
+    [Esun_, Esky_, Eint] = equations.transmittances2irradiance(irr_meas, rdd, rsd, Rin);
 
     piL_    = rso .* Esun_ + rdo .* Esky_ + SIFs;
     E_tot = Esun_ + Esky_;
