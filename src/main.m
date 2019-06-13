@@ -223,10 +223,10 @@ if ~isempty(path.validation)
     if length(c) < n_val
         % this ploting is not designed for one value but we hack
         % it to do so for you
-        val = measured.val(1, [1 c + 1]);
-        parameters = parameters(:, c);
+        measured.val = measured.val(1, [1 c + 1]);
+        parameters = parameters(:, c);    
     end
-    plot.modelled2measured(parameters, tab, val, graph_name)
+    plot.modelled2measured(parameters, tab, measured.val, graph_name)
 end
 
 %% see figures you want
