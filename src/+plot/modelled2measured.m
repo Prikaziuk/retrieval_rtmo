@@ -64,7 +64,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         lm_full = fitlm(meas(~i_nans), mod(~i_nans));   
         lm = polyfit(meas(~i_nans), mod(~i_nans), 1);
         fit = polyval(lm, meas);
-        plot(meas, fit, 'r:')  % refline(lm(1), lm(2))
+        plot(meas, fit, 'r:')  % refline(lm(1), lm(2)) % lsline()
         % metrics
         rmse = sqrt(nanmean((meas-mod) .^ 2));
         bias = nanmean(mod - meas);
@@ -95,10 +95,24 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
     % plotting off axis to produce legend
     scatter(-1, -1, 10, 'filled')
     refline(0, -1)
+    h = refline(0, -1);
+    h.LineStyle = ':';
+    h.Color = 'red';
     text(x, flip(y), fitted_varnames, 'HorizontalAlignment', 'center', 'Interpreter', 'none')
-    legend('data', '1:1', 'Location', 'bestoutside')
+    constant_names = tab.variable(~tab.include);
+    constant_values = tab.value(~tab.include);
+    n_const = length(constant_names);
+    leg = cell(n_const, 1);
+    for i=1:n_const
+        leg{i} = sprintf('%s=%g', constant_names{i}, constant_values(i));
+    end
+    text(x*2, 1:n_const, leg, 'HorizontalAlignment', 'left', 'Interpreter', 'none')
+    legend({'data', '1:1', 'lm'}, 'Location', 'bestoutside')
     % axis limits does not allow to show scatter and refline
-    axis([0 2 0 n_fit + 1])
+    ymax = max(n_fit+1, n_const+3);
+    axis([0 2 0 ymax])
+    set(gca,'xtick',[]);
+    set(gca,'ytick',[]);
     title('These variables where tuned')
     
     if n_colors > 1

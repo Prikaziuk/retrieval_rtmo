@@ -235,6 +235,7 @@ set(figures(5), 'Visible', 'on')
 %% plot from the output xlsx file
 
 % your_output_xlsx_file = path.xlsx_path;
+% your_validation_path = path.validation;
 % [wl, meas, mod, rmse, params, tab] = io.read_output(your_output_xlsx_file);
 % 
 % for j=32  % 1:size(meas, 2)
@@ -243,9 +244,9 @@ set(figures(5), 'Visible', 'on')
 %     rmse_j = rmse(:, j);
 %     plot.reflectance(wl, meas_j, mod_j, j, rmse_j)
 % end
-% % close all
+% close all
 % 
-% validation = readtable(path.validation, 'TreatAsEmpty',{'NA'});
+% validation = readtable(your_validation_path, 'TreatAsEmpty',{'NA'});
 % plot.modelled2measured(params, tab, validation, 'validation')
 
 
