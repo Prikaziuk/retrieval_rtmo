@@ -245,8 +245,11 @@ set(figures(5), 'Visible', 'on')
 %     plot.reflectance(wl, meas_j, mod_j, j, rmse_j)
 % end
 % close all
-% 
+%
+% params = parameters;
 % validation = readtable(your_validation_path, 'TreatAsEmpty',{'NA'});
 % plot.modelled2measured(params, tab, validation, 'validation')
 
+% if you have Cab, Cab_sd in validation you might want to use this function
+% plot.modelled2measured_sd(params, tab, val_sd, 'validation')
 

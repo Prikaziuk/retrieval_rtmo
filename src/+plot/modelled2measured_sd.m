@@ -1,4 +1,4 @@
-function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
+function modelled2measured_sd(modelled, tab, measured_tab, graph_name, filled)
 
     %% to fill or not to fill (to make number visible)
     filled = true;
@@ -8,6 +8,20 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
     
     %% measured data from table to matrix, keep names 
     measured_names = table2array(measured_tab(:, 1));
+    sd_i = contains(measured_names, 'sd');
+    if any(sd_i)
+        sd_names = measured_names(sd_i);
+        sd_vals_present = table2array(measured_tab(sd_i, 2:end));
+        measured_names = measured_names(~sd_i);
+        measured_tab = measured_tab(~sd_i, :);
+        sd_names = split(sd_names, '_');
+        sd_names = sd_names(:,1);
+        [~, i_meas, i_sd] = intersect(measured_names, sd_names, 'stable');
+        % this line guarantees sd for each parameter (even if less provided)
+        sd_vals = nan(length(measured_names), size(measured_tab, 2) - 1);
+        % this line guarantees sd order == variables order
+        sd_vals(i_meas, :) = sd_vals_present(i_sd, :);
+    end
     measured_tab(:, 1) = [];
     names = measured_tab.Properties.VariableNames;
     measured = table2array(measured_tab);
@@ -20,7 +34,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
 
     %% find groups based on column names
     names_spl = split(names, '_');                      % split column headers by '_'
-    [groups, ~, group_id] = unique(names_spl(:,:, 1));  % see if there is any logic behind colnames
+    [groups, ~, group_id] = unique(names_spl(:,:, 1), 'stable');  % see if there is any logic behind colnames
     n_spectra = size(measured, 2);
     if length(groups) < n_spectra
         n_colors = length(groups);
@@ -29,6 +43,15 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         n_colors = n_spectra;
         group_id = 1:n_colors;
         color_names = cellstr(num2str(group_id'));
+        empty_meas_cols = all(isnan(measured), 1);
+        if any(empty_meas_cols)
+            % removing extra colors because NaNs will not be displayed
+            n_colors = sum(~empty_meas_cols);
+            group_id = nan(size(measured, 2), 1);
+            group_id(~empty_meas_cols) = 1:n_colors;
+            color_names = groups(~empty_meas_cols);
+        end
+
     end
     if filled
         scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id, 'filled');
@@ -54,27 +77,37 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         subplot(n_row, n_col, i)
         mod = modelled(i_mod(i), :);
         meas = measured(i_meas(i), :);
-        scatter_my(meas, mod)
+        if exist('sd_vals','var') == 1
+            sd = sd_vals(i_meas(i), :);
+            e = errorbar(meas, mod, sd, 'horizontal', 'o');
+            e.MarkerSize = 10;
+            e.MarkerFaceColor='w';
+            e.Color = 'k';
+            hold on
+        end
+        s = scatter_my(meas, mod);
+        s.MarkerEdgeColor='k';
         for j = 1:n_spectra
-            text(meas(j), mod(j), num2str(j), 'HorizontalAlignment', 'center')
+%             text(meas(j), mod(j), num2str(j), 'HorizontalAlignment', 'center')
             hold on
         end
         % liner model
         i_nans = isnan(meas);
         lm_full = fitlm(meas(~i_nans), mod(~i_nans));   
         lm = polyfit(meas(~i_nans), mod(~i_nans), 1);
-        fit = polyval(lm, meas);
-        plot(meas(~i_nans), fit(~i_nans), 'r:')  % refline(lm(1), lm(2)) % lsline()
+        predict_x = [min_val(i), max_val(i)];
+        fit = polyval(lm, predict_x);
+        plot(predict_x, fit, 'r:')  % refline(lm(1), lm(2)) % lsline()
         % metrics
         rmse = sqrt(nanmean((meas-mod) .^ 2));
         bias = nanmean(mod - meas);
-        title(sprintf('%s\n%.2f (rmse), %.2f (bias), \\color{red}%.2f (r^2adj)',...
+        title(sprintf('%s\n%.2g (rmse), %.2g (bias), \\color{red}%.1g (r^2adj)',...
             vars{i}, rmse, bias, lm_full.Rsquared.Adjusted))
         xlabel('measured')
         ylabel('modelled')
         hold on
-        refline(1, 0)
         axis([min_val(i), max_val(i), min_val(i), max_val(i)])
+        refline(1, 0)
     end
     
     if verLessThan('matlab', '9.5')
@@ -122,6 +155,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         colorbar('YTick', 1 + 0.5*(n_colors-1)/n_colors:(n_colors-1)/n_colors:n_colors, ...
                  'YTickLabel', color_names)
     end
-         
+        
+    set(findall(gcf,'-property','FontSize'), 'FontSize', 14)
 
 end
