@@ -84,8 +84,8 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     prior.Apm = tab.x0(tab.include);
     prior.Aps = tab.uncertainty(tab.include);
     
-%     er2 = (p - prior.Apm) ./ prior.Aps; 
     er2 = 0;
+%     er2 = (p - prior.Apm) ./ prior.Aps; 
     
     %% total error
     er = [er1 ; 3E-2* er2];

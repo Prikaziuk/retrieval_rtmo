@@ -1,39 +1,18 @@
-function save_output(input_path, path, measured, c, reflSAIL_all, rsoil_all, soilpar_all, leafbio_all, ...
-    canopy_all, fluorescence_all, rmse_all, J_all)
+function save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
     
-    time_string = sprintf('%4.0f-%02.0f-%02.0f-%02.0f%02.0f%02.0f', clock);
-    Output_dir      =fullfile(path.output_path, path.simulation_name);
-    mkdir(Output_dir)
-
-    copyfile(input_path,fullfile(Output_dir, [time_string '.xlsx']),'f');
-    outfile = fullfile(Output_dir, [time_string '.xlsx']);
-
-    xlswrite(outfile,measured.refl(:,c),'Rmeas','B2'  );
-    xlswrite(outfile,measured.wl,'Rmod','A2'  );
-    xlswrite(outfile,measured.wl,'Rmeas','A2'  );
-    xlswrite(outfile,measured.wl,'Rsoilmod','A2'  );
+    xlsx_path = path.xlsx_path;
+    sheets = path.sheets;
+    col = path.xlsx_cols{2}; % first is occupied by names
     
-    xlswrite(outfile,reflSAIL_all,'Rmod','B2'  );
-    xlswrite(outfile,rsoil_all,'Rsoilmod','B2'  );
-    xlswrite(outfile,soilpar_all.B','output','B2'  );
-    xlswrite(outfile,soilpar_all.BSMlat','output','B3'  );
-    xlswrite(outfile,soilpar_all.BSMlon','output','B4'  );
-    xlswrite(outfile,soilpar_all.SMC','output','B5'  );
-    xlswrite(outfile,leafbio_all.Cab','output','B6'  );
-    xlswrite(outfile,leafbio_all.Cw','output','B7'  );
-    xlswrite(outfile,leafbio_all.Cdm','output','B8'  );
-    xlswrite(outfile,leafbio_all.Cs','output','B9'  );
-    xlswrite(outfile,leafbio_all.Cca','output','B10'  );
-    xlswrite(outfile,leafbio_all.Cant','output','B11'  );
-    xlswrite(outfile,leafbio_all.N','output','B12'  );
-    xlswrite(outfile,canopy_all.LAI','output','B13'  );
-    xlswrite(outfile,canopy_all.LIDFa','output','B14'  );
-    xlswrite(outfile,canopy_all.LIDFb','output','B15'  );
-    xlswrite(outfile,fluorescence_all.wpcf,'output','B16'  );
-    xlswrite(outfile,fluorescence_all.SIF,'Fluorescence','B2'  );
-    xlswrite(outfile,fluorescence_all.SIFnorm,'Fluorescence_norm','B2'  );
-    xlswrite(outfile,rmse_all','output','B20'  );
-    xlswrite(outfile,leafbio_all.std','output','B21');
+    xlswrite(xlsx_path, refl_meas, sheets.meas, col);
+    
+    xlswrite(xlsx_path, refl_mod, sheets.mod, col);
+    xlswrite(xlsx_path, refl_soil, sheets.soil_mod, col);
+    
+    xlswrite(xlsx_path, sif_rad, sheets.fluo, col);
+    xlswrite(xlsx_path, sif_norm, sheets.fluo_norm, col);
+    
+    params = [rmse_all;  parameters; parameters_std];
+    xlswrite(xlsx_path, params, sheets.output, col);
 
-    save(fullfile(Output_dir, [time_string '_J']), 'J_all')
 end

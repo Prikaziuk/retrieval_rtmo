@@ -28,7 +28,7 @@ function matrix = read_dat(file_path, skip_lines_custom)
 
         if skip_lines ~= 0
             warning(['We are skipping %d line(s) in your `%s` file '...
-                'because matlab thinks they have headers'], skip_lines, file_path)
+                'because matlab thinks it is the header'], skip_lines, file_path)
         end
 
     %     matrix = dlmread(file_path, sep, skip_lines, 0);

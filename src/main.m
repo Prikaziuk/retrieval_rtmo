@@ -35,8 +35,10 @@ end
 % i_noise = measured.wl > 1780 & measured.wl < 1950;
 % measured.refl(i_noise, :) = nan;
 
-i_noise = (measured.wl > 1350 & measured.wl < 1430) | (measured.wl > 1805 & measured.wl < 1975) | measured.wl > 2400;
-measured.refl(i_noise, :) = nan;
+% i_noise = (measured.wl > 1350 & measured.wl < 1430) | (measured.wl > 1805 & measured.wl < 1975) | measured.wl > 2400;
+% i_noise = measured.wl > 1800;
+% i_noise = measured.wl < 450;
+% measured.refl(i_noise, :) = nan;
 
 % mask noisy HyPlant
 % i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
@@ -151,16 +153,16 @@ end
 % if isempty(gcp('nocreate'))
 % %     prof = parallel.importProfile('local_Copy.settings');
 % %     parallel.defaultClusterProfile(prof);
-%     parpool(N_proc);
+%     parpool(N_proc, 'IdleTimeout', Inf);
 % end
 
 %% time estimation
 if ~exist('N_proc', 'var')
     N_proc = 1;
 end
-eta = n_spectra * 5 / (N_proc * 60);
+eta = n_spectra * 10 / (N_proc * 60);
 warning(['You have %d spectra and asked for %d CPU(s). '...
-    'Fitting will take about %.2f min (~5 s / spectra / CPU)'], n_spectra, N_proc, eta)
+    'Fitting will take about %.2f min (~10 s / spectra / CPU)'], n_spectra, N_proc, eta)
 
 %% fitting
 %% change to parfor if you like
@@ -211,11 +213,15 @@ for j = c
     figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
     
     %% send data to write and plot
-    send(q, {j, results_j, uncertainty_j, measurement})  
+%     send(q, {j, results_j, uncertainty_j, measurement})  
 %     send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
 %     io.save_output_csv(rmse_all, parameters, parameters_std, path)
 
 end
+
+%% if your parfor does not fail try disabling send
+io.save_output(path, rmse_all, parameters, parameters_std, measured.refl, refl_mod, refl_soil, sif_norm, sif_rad)
+
 
 if ~isempty(path.validation)
     graph_name = [path.simulation_name, ' ', sensor.instrument_name];
@@ -229,27 +235,10 @@ if ~isempty(path.validation)
     plot.modelled2measured(parameters, tab, measured.val, graph_name)
 end
 
-%% see figures you want
-set(figures(5), 'Visible', 'on')
+%% see figures you want (replace c(1) with spectrum number)
+set(figures(c(1)), 'Visible', 'on')
 
 %% plot from the output xlsx file
 
-% your_output_xlsx_file = path.xlsx_path;
-% your_validation_path = path.validation;
-% [wl, meas, mod, rmse, params, tab] = io.read_output(your_output_xlsx_file);
-% 
-% for j=32  % 1:size(meas, 2)
-%     meas_j = meas(:, j);
-%     mod_j = mod(:, j);
-%     rmse_j = rmse(:, j);
-%     plot.reflectance(wl, meas_j, mod_j, j, rmse_j)
-% end
-% close all
-%
-% params = parameters;
-% validation = readtable(your_validation_path, 'TreatAsEmpty',{'NA'});
-% plot.modelled2measured(params, tab, validation, 'validation')
-
-% if you have Cab, Cab_sd in validation you might want to use this function
-% plot.modelled2measured_sd(params, tab, val_sd, 'validation')
+% replot_all(your_output_xlsx_file, your_validation_path)
 
