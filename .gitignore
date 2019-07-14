@@ -1,6 +1,7 @@
 *.asv
 src/+local/
 measured/*
+output/*
 src/~$Input_data.xlsx
 src/Input_data.xlsx
 src/Input_data-default (synthetic).xlsx
