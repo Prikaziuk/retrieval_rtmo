@@ -1,0 +1,3 @@
+sensor MSI
+angles tts=30, tto=0, psi=0
+n_spectra=10

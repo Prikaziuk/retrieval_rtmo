@@ -32,15 +32,12 @@ if ~isempty(path.soilfile)
 end
 
 % mask atmospheric window
-% i_noise = measured.wl > 1780 & measured.wl < 1950;
-% measured.refl(i_noise, :) = nan;
-
+% ASD
 % i_noise = (measured.wl > 1350 & measured.wl < 1430) | (measured.wl > 1805 & measured.wl < 1975) | measured.wl > 2400;
 % i_noise = measured.wl > 1800;
-% i_noise = measured.wl < 450;
 % measured.refl(i_noise, :) = nan;
 
-% mask noisy HyPlant
+% HyPlant
 % i_noise = (measured.wl > 907 & measured.wl < 938) | (measured.wl > 1988 & measured.wl < 2037);
 % measured.refl(i_noise, :) = nan;
 
@@ -187,12 +184,6 @@ for j = c
 
     results_j = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor_in);
 
-    %% compare with known results for Cab, Cca, Cant, Cdm, Cw, N, LAI, LIDFs
-    % ..\data\measured\airborne\Hyplant_refl.txt, first spectra
-    known_res_hyplant_prior_e_3 = [0.5000   25.0000   45.0000   30.0000   41.6531   12.1656    2.6713    0.0035    0.1623    0.6000    3.5000    2.5646    0.9942   -0.0029         0         0         0         0]';
-    known_res_hyplant_e_3 =       [0.5000   25.0000   45.0000   30.0000   40.5414   13.4927    4.1961    0.0045    0.1694    0.6000    3.4985    2.9241    0.9981    0.0009         0         0         0         0]';
-%     [known_res_hyplant_prior_e_3, known_res_hyplant_e_3, results_j.parameters]  
-
     %% record to keep in the workspace
 
     parameters(:, j) = results_j.parameters;
@@ -235,10 +226,10 @@ if ~isempty(path.validation)
     plot.modelled2measured(parameters, tab, measured.val, graph_name)
 end
 
-%% see figures you want (replace c(1) with spectrum number)
+%% see figures you want (replace c(1) with the spectrum number)
 set(figures(c(1)), 'Visible', 'on')
 
 %% plot from the output xlsx file
 
-% replot_all(your_output_xlsx_file, your_validation_path)
+% plot.replot_all(your_output_xlsx_file, your_validation_path)
 

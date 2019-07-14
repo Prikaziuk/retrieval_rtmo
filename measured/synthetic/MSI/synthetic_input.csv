@@ -1,0 +1,19 @@
+tune,variable,value,lower,upper,uncertainty,description,units,include
+0,B,0.5,0,0.9,0.3,"soil brightness",-,0
+0,BSMlat,25,20,40,12,"BSM model parameter lat",-,0
+0,BSMlon,45,40,60,9,"BSM model parameter lon",-,0
+0,SMC,30,5,55,12,"volumetric soil moisture content",%,0
+1,Cab,40,0,100,30,"leaf chlorophyll content",ug cm-2,1
+1,Cca,5,0,25,4,"leaf carotenoid content",ug cm-2,1
+1,Cant,1,0,5,1,"leaf anthocyanin content",ug cm-2,1
+1,Cdm,0.012,0,0.02,0.006,"leaf mass per area (dry matter)",g cm-2,1
+1,Cw,0.009,0,0.2,0.02,"equivalent leaf water thickness",cm,1
+1,Cs,0.6,0,1.2,0.4,"senescent material (brown pigments)",-,1
+1,N,1.4,1,3.5,0.75,"mesophyll structure parameter",-,1
+1,LAI,3,0,7,1,"canopy leaf area index",m2 m-2,1
+1,LIDFa,-0.35,-1,1,0.6,"leaf inclination distribution function parameters a, b",-,1
+NaN,LIDFb,-0.15,-1,1,0.6,"",-,1
+0,SIF_PC1,0,0,40,1000000000,"sun induced fluorescence (fit only)",,0
+NaN,SIF_PC2,0,-20,20,1000000000,"sun induced fluorescence (fit only)",,0
+NaN,SIF_PC3,0,-10,10,1000000000,"sun induced fluorescence (fit only)",,0
+NaN,SIF_PC4,0,-2,2,1000000000,"sun induced fluorescence (fit only)",,0

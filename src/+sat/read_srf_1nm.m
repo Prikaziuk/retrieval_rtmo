@@ -13,7 +13,7 @@ function srf = read_srf_1nm(sensors_path, instrument_name, i_srf)
         'Did you set `Bands` sheet correctly? Is `instrument_name` correct?'], sensors_path)
     if ncol / 2 > length(i_srf)
         warning(['Some bands from `%s` were excluded.\n' ...
-            'Ignore this warning if it is desired behaviour'], instrument_name)
+            'Ignore this warning if it is the desired behaviour'], instrument_name)
     end
     
     i_wl = 1:2:ncol;

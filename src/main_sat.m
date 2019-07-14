@@ -80,6 +80,7 @@ rmse_all = zeros(n_spectra, 1);
 [refl_mod, refl_soil] = deal(zeros(n_wl, n_spectra));
 [sif_rad, sif_norm] = deal(zeros(n_wlF, n_spectra));
 J_all = zeros(n_wl, n_params, n_spectra);  % we fit all wl we have
+figures = gobjects(n_spectra,1);
 
 %% start saving
 path = io.create_output_file(input_path, path, measured, tab.variable, spectral.wlF');
@@ -140,11 +141,7 @@ for j = 1 : n_spectra
     end
 
     %% done, this is what comes out
-    pixel_k_1_e3 = [0.5000   25.0000   45.0000   30.0000   37.0763   11.5951    1.0114    0.0089    0.0128    0.6000    2.3695    0.9816   -0.1144   -0.1392         0         0         0         0]';
-
     results_j = fit_spectra(measurement, tab, angles, irr_prospect, fixed, sensor);
-    
-    [pixel_k_1_e3, results_j.parameters]
 
     parameters(:, j) = results_j.parameters;
     rmse_all(j) = results_j.rmse;
@@ -164,5 +161,8 @@ for j = 1 : n_spectra
 
     %% send data to write and plot
     send(q, {j, results_j, uncertainty_j, measurement})
+    figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
 
 end
+
+set(figures(1), 'Visible', 'on')

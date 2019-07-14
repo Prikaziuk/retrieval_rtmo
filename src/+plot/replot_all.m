@@ -20,6 +20,6 @@ function figures = replot_all(your_output_xlsx_file, your_validation_path)
         plot.modelled2measured(params, tab, validation, 'validation')
 
     %     if you have Cab, Cab_sd in validation you might want to use this function
-        plot.modelled2measured_sd(params, tab, validation, 'validation')
+%         plot.modelled2measured_sd(params, tab, validation, 'validation')
     end
 end

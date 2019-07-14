@@ -122,6 +122,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         colorbar('YTick', 1 + 0.5*(n_colors-1)/n_colors:(n_colors-1)/n_colors:n_colors, ...
                  'YTickLabel', color_names)
     end
-         
+    
+%     set(findall(gcf,'-property','FontSize'),'FontSize', 18)
 
 end
