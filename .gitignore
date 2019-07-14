@@ -1,6 +1,5 @@
 *.asv
 src/+local/
-output/*
 measured/*
 src/~$Input_data.xlsx
 src/Input_data.xlsx

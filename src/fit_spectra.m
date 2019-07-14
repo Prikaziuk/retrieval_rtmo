@@ -12,7 +12,7 @@ function results = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor
     lb = tab.lower(iparams);
     ub = tab.upper(iparams);
     
-    stoptol = 1E-3;  % we recommend e-6
+    stoptol = 1E-6;  % we recommend e-6
     opt = optimset('MaxIter', 30, 'TolFun', stoptol);
     
     %% function minimization
