@@ -1,5 +1,9 @@
-function generate_synthetic(sensor_name, n_spectra)
+function generate_synthetic(sensor_name, n_spectra, noise_times)
     
+    if nargin == 2
+        noise_times = 0;
+    end
+
     sensor.instrument_name = sensor_name; % 'MSI', 'ASD', '' ...
 
     if isempty(sensor_name)
@@ -11,7 +15,7 @@ function generate_synthetic(sensor_name, n_spectra)
     outdir = fullfile('..', 'measured', 'synthetic', sensor_name);
     mkdir(outdir);
 
-    angles.tts = 30;
+    angles.tts = 45;  % 30
     angles.tto = 0;
     angles.psi = 0;
 
@@ -72,14 +76,30 @@ function generate_synthetic(sensor_name, n_spectra)
 
     refls = zeros(length(measured.wl), n_spectra);
     for i=1:n_spectra
+        disp(i)
         p = params(:, i);
         [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measured, tab, angles, ...
                                                                        irr_meas, fixed, sensor);
         refls(:, i) = refl;
     end
     
-    plot(measured.wl, refls)
-
+  
+    % SNR noise (Synergy and OLCI)
+%     snr_synergy = csvread("D:\PyCharm_projects\gsa_rtmo_6S\for_paper\retrievability\SNRs\SNRs_S3A.csv", 0, 1);
+%     single_noise = refls ./ snr_synergy(1:size(refls, 1));
+%     %noise = single_noise * noise_times; constant % of specific noise
+%     noise = rand(size(refls)) .* single_noise * noise_times;
+    % constant noise up to certain % from measured
+    single_noise = (refls * noise_times / 100);
+    noise = rand(size(refls)) .* single_noise * 2;  % *2 because mean(rand) = 0.5
+    
+    csvwrite(fullfile(outdir, 'synthetic_toa.csv'), refls)
+    csvwrite(fullfile(outdir, 'synthetic_noise.csv'), noise)
+    refls = refls + noise;
+    
+    figure()
+    plot(measured.wl, refls, 'o-')
+    
     params = helpers.demodify_parameters(params, tab.variable(iparams));
     validation = [tab.variable(iparams), array2table(params)];
 

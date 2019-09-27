@@ -1,4 +1,4 @@
-function path = create_output_file(input_path, path, measured, var_names, fluo_wl)
+function path = create_output_file(input_path, path, measured, var_names, fluo_wl, n_spectra)
 
     time_string = sprintf('%4.0f-%02.0f-%02.0f-%02.0f%02.0f%02.0f', clock);
 %     time_string = 'test';
@@ -17,7 +17,8 @@ function path = create_output_file(input_path, path, measured, var_names, fluo_w
     sheets.ts = 'TS_out';
     
     excel_columns = num2cell('A':'Z');
-    n_col = size(measured.refl, 2);
+%     n_col = size(measured.refl, 2);
+    n_col = n_spectra;
     repeats = fix(n_col / length(excel_columns));  % integer part
     col_needed = excel_columns;
     for i=1:repeats

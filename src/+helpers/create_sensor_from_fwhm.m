@@ -27,6 +27,7 @@ function create_sensor_from_fwhm(input_path)
     writetable(tab, input_path, 'Sheet', 'sensor')
     
     %% plot bands
+    figure()
     legend_cell = cell(1, n_bands);
     for i=1:n_bands
         band_i = out.(sprintf('band%d', i));
@@ -35,6 +36,9 @@ function create_sensor_from_fwhm(input_path)
         legend_cell{i} = sprintf('band%d', i);
     end
     legend(legend_cell, 'location', 'bestoutside')
+%     xticks(400:50:900)
+%     axis([400 900 0 1])
+%     title('Altum camera')
 end
 
 function dist = gaussian_fwhm(wl, centre, fwhm)

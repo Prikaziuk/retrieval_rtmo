@@ -67,6 +67,7 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     %% canopy reflectance in measurements wl
     if isfield(sensor, 'srf')
         [refl, soil_refl, fluo] = to_sensor.rtmo2srf_refl(rad, SIF, soil.refl, spectral.wlP, irr_meas, sensor);
+%         [refl, soil_refl, fluo] = to_sensor.rtmo2srf_radiance(rad, SIF, soil.refl, spectral.wlP, irr_meas, sensor);
         er1 = refl - measurement.refl;
     else
         [refl, soil_refl, fluo] = to_sensor.rtmo2measured_refl(rad, SIF, soil.refl, spectral.wlP, irr_meas, measurement, sensor.Rin);

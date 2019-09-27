@@ -100,7 +100,6 @@ if sensor.timeseries
     sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, n_spectra);
     sensor.Rin_ts = ts.get_Rin_ts(path_ts.Rin_path, sensor.Rin, n_spectra);
 end
-
 %% preallocate output structures
 
 n_params = length(tab.variable);
@@ -137,21 +136,20 @@ if isunix
     io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
     afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
 else
-    path = io.create_output_file(input_path, path, measured, tab.variable);
+    path = io.create_output_file(input_path, path, measured, tab.variable, n_spectra);
     afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
 end
-
 %% safely writing data from (par)for loop
 % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
 
 %% parallel
 %% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-% N_proc = 3;
-% if isempty(gcp('nocreate'))
-% %     prof = parallel.importProfile('local_Copy.settings');
-% %     parallel.defaultClusterProfile(prof);
-%     parpool(N_proc, 'IdleTimeout', Inf);
-% end
+N_proc = 3;
+if isempty(gcp('nocreate'))
+%     prof = parallel.importProfile('local_Copy.settings');
+%     parallel.defaultClusterProfile(prof);
+    parpool(N_proc, 'IdleTimeout', Inf);
+end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -163,7 +161,7 @@ warning(['You have %d spectra and asked for %d CPU(s). '...
 
 %% fitting
 %% change to parfor if you like
-for j = c
+parfor j = c
      fprintf('%d / %d', j, length(c))
     %% this part is done like it is to enable parfor loop
     measurement = struct();

@@ -14,9 +14,8 @@ function fixed = read_fixed_input()
     optipar = load(fullfile('..', 'input', 'fluspect_data', 'Optipar2017_ProspectD'));
     
     %% collect
-    
     fixed.spectral = spectral;
     fixed.pcf = pcf;
     fixed.optipar = optipar.optipar;
-    fixed.srf_sensors = {'S3A_OLCI', 'MSI'};
+    fixed.srf_sensors = {'S3A_OLCI', 'MSI', 'altum', 'altum_09', 'sensorh_a_m', 'SLSTR', 'Synergy'};
 end

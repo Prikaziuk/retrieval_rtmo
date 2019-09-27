@@ -1,6 +1,6 @@
 function values = demodify_parameters(values, varnames)    
     
-    assert(length(values) == length(varnames), 'different length of variables and values')
+    assert(size(values, 1) == length(varnames), 'different length of variables and values')
     
     % LAI from exponential to linear
     i_lai = strcmp('LAI', varnames);

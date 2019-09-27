@@ -5,13 +5,16 @@ function out = read_netcdf(nc_path, var_names)  % nc_path
     nc_info = ncinfo(nc_path);
     n_vars = length(nc_info.Variables);
     nc_var_names = strings(n_vars, 1);
-    nc_var_sizes = zeros(n_vars, 2);
+    nc_var_sizes = zeros(n_vars, 2);  % 2 to length(nc_info.Dimensions)
     for i = 1:n_vars
         nc_var_names(i) = nc_info.Variables(i).Name;
         var_size = nc_info.Variables(i).Size;
         if ~isempty(var_size)
             if length(var_size) == 1
                 var_size = [var_size, 0];  % metadata field
+            end
+            if length(var_size) > 2
+                disp('ups')
             end
             nc_var_sizes(i, :) = var_size;
         end
@@ -24,6 +27,7 @@ function out = read_netcdf(nc_path, var_names)  % nc_path
         'Did you misspell band name on `bands` sheet?'])
     [x_b, y_b] = get_band_dimensions(nc_var_sizes, bi);
     refl = read_variable(nc_path, x_b, y_b, band_names);
+%     refl = read_variable_any_size(nc_path, band_names);
     
     %% there is a test on reflectance validity, but some fill values like -1, -999 will fail it
 %     refl_na_free = refl(~isnan(refl));
@@ -102,6 +106,17 @@ function nc_mat = read_variable(nc_path, x, y, var_names)
         varname = char(var_names(i));
         nc_mat(:, :, i) = ncread(nc_path, varname);
     end
+end
+
+function nc_mat = read_variable_any_size(nc_path, var_names)
+    n_vars = length(var_names);
+    nc_mat = [];
+    for i = 1:n_vars
+        varname = char(var_names(i));
+        nc_var = ncread(nc_path, varname);
+        nc_mat = cat(4, nc_mat, nc_var);
+    end
+    nc_mat = squeeze(nc_mat);
 end
 
 function [x, y] = get_band_dimensions(nc_sizes, i_nc_sizes)
