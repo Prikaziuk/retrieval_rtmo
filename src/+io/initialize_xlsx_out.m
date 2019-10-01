@@ -1,4 +1,4 @@
-function path = create_output_file(input_path, path, measured, var_names, fluo_wl, n_spectra)
+function path = initialize_xlsx_out(path, measured, var_names, n_spectra, fluo_wl)
     
     if ~isfield(path, 'xlsx_path')  % not copied by create folder
         time_string = sprintf('%4.0f-%02.0f-%02.0f-%02.0f%02.0f%02.0f', clock);
@@ -6,7 +6,7 @@ function path = create_output_file(input_path, path, measured, var_names, fluo_w
         mkdir(outdir_path)
         
         xlsx_path = fullfile(outdir_path, [time_string '.xlsx']);
-        copyfile(input_path, xlsx_path, 'f');
+        copyfile(path.input_path, xlsx_path, 'f');
         path.xlsx_path = xlsx_path;
     end
     xlsx_path = path.xlsx_path;

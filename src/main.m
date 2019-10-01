@@ -118,7 +118,8 @@ J_all = zeros(n_fit_wl, n_params, n_spectra);
 %% start saving
 q = parallel.pool.DataQueue;
 if isunix
-    path = io.create_output_folder(input_path, path, tab.variable);
+    path = io.create_output_folder(path);
+    path = io.initialize_csv(path, tab.variable);
 
     tmp_zeros_res.rmse = rmse_all;
     tmp_zeros_res.parameters = parameters;
@@ -136,7 +137,7 @@ if isunix
     io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
     afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
 else
-    path = io.create_output_file(input_path, path, measured, tab.variable, n_spectra);
+    path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra);
     afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
 end
 %% safely writing data from (par)for loop

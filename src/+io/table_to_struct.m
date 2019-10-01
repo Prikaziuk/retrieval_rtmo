@@ -64,7 +64,7 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
         if isnan(value)
             value = '';
         end
-        if contains(struct_name, 'path')
+        if isequal(struct_name, 'path')
             val_split = strsplit(value, {'/','\'});
             value = fullfile(val_split{:});
         end

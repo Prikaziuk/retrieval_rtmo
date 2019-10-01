@@ -8,12 +8,15 @@ function srf = read_srf_1nm(sensors_path, instrument_name, i_srf)
 
     ncol = size(num, 2);
     assert(mod(ncol, 2) == 0, 'odd number of columns in SRFs. Expected even: (wl, response) * n_bands')
-    assert(ncol / 2 >= length(i_srf), ['The number of spectral response functions in `%s` file is '...
+    n_bands = ncol / 2;
+    assert(n_bands >= length(i_srf), ['The number of spectral response functions in `%s` file is '...
         'less then the number of bands you provided on `Bands` sheet of `Input_data.xslx`.\n'... 
         'Did you set `Bands` sheet correctly? Is `instrument_name` correct?'], sensors_path)
-    if ncol / 2 > length(i_srf)
-        warning(['Some bands from `%s` were excluded.\n' ...
-            'Ignore this warning if it is the desired behaviour'], instrument_name)
+    if n_bands > length(i_srf)
+        omitted_bands = setdiff(1:n_bands, i_srf);
+        warning(['%d bands (# %s) from `%s` were excluded.\n' ...
+            'Ignore this warning if it is the desired behaviour'], ...
+            length(omitted_bands), num2str(omitted_bands), instrument_name)
     end
     
     i_wl = 1:2:ncol;

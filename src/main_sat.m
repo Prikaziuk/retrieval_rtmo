@@ -78,42 +78,39 @@ n_params = length(tab.variable);
 n_wl = length(measured.wl);
 n_wlF = length(spectral.wlF);
 
-[parameters, parameters_std] = deal(zeros(n_params, n_spectra));
-rmse_all = zeros(n_spectra, 1);
-[refl_mod, refl_soil] = deal(zeros(n_wl, n_spectra));
-[sif_rad, sif_norm] = deal(zeros(n_wlF, n_spectra));
-J_all = zeros(n_wl, n_params, n_spectra);  % we fit all wl we have
+[parameters, parameters_std] = deal(nan(n_params, n_spectra));
+[rmse_all, exitflags] = deal(nan(n_spectra, 1));
+[refl_mod, refl_soil] = deal(nan(n_wl, n_spectra));
+[sif_rad, sif_norm] = deal(nan(n_wlF, n_spectra));
+J_all = nan(n_wl, n_params, n_spectra);  % we fit all wl we have
 figures = gobjects(n_spectra,1);
 
 %% start saving
-path = io.create_output_file(input_path, path, measured, tab.variable, spectral.wlF', n_spectra);
 
-%% one netcdf
-nc_path = fullfile(path.outdir_path, [path.time_string, '.nc']);
+path = io.create_output_folder(path);
 
-sat.initialize_nc_out(nc_path, tab, n_row, n_col, n_times, var_names.bands)
-
-% TODO: possible inversion: lon is x and lat is y
-if all(isfield(measured, {'lat', 'lon'}))
-    if size(measured.lat, 2) == 1
-        nccreate(nc_path, 'lat', 'Dimensions', {'x', n_row})
-        ncwrite(nc_path, 'lat', measured.lat(i_row))
-        nccreate(nc_path, 'lon', 'Dimensions', {'y', n_col})
-        ncwrite(nc_path, 'lon', measured.lon(i_col))
-    else
-        nccreate(nc_path, 'lat', 'Dimensions', {'x', n_row, 'y', n_col})
-        ncwrite(nc_path, 'lat', measured.lat(i_row, i_col))
-        nccreate(nc_path, 'lon', 'Dimensions', {'x', n_row, 'y', n_col})
-        ncwrite(nc_path, 'lon', measured.lon(i_row, i_col))
-    end
-end
+path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
 
 %% safely writing and plotting data from (par)for loop
-q = parallel.pool.DataQueue;
-afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-afterEach(q, @(x) sat.write_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, nc_path, var_names));
-% it is not funny plotting all pixels!
-% afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+
+data_queue_present = true;
+if verLessThan('matlab', '9.2')  % < R2017a
+    disp(['You are using matlab < R2017a, hence writing of the output will occur after )(par)for loop' ...
+        'In case of errors no output will be saved to output files. \n However it will be available in the workspace.'])
+    data_queue_present = false;
+else
+    q = parallel.pool.DataQueue;
+    if isunix
+        warning('not yet writing to .csv on UNIX, only .nc will be written')
+        % path = io.initialize_csv(path, tab.variable);
+    else
+        path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra, spectral.wlF');
+        afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+    end
+    afterEach(q, @(x) sat.save_output_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, path));
+    % it is not funny plotting all pixels!
+    % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+end
 
 %% parallel
 % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
@@ -128,9 +125,9 @@ end
 if ~exist('N_proc', 'var')
     N_proc = 1;
 end
-eta = n_spectra * 5 / (N_proc * 60);
-warning(['You have %d pixels (%d pixels x %d times) and asked for %d CPU(s). '...
-    'Fitting will take about %.2f min (~5 s / pixel / CPU)'], ...
+eta = n_spectra * 7 / (N_proc * 60);
+fprintf(['You have %d pixels (%d pixels x %d times) and asked for %d CPU(s). '...
+    'Fitting will take about %.2f min (~7 s / pixel / CPU)'], ...
     n_spectra, n_row * n_col, n_times, N_proc, eta)
 
 %% fitting
@@ -146,7 +143,7 @@ parfor j = 1 : n_spectra
     
     %% this part is done like it is to enable parfor loop
     measurement = struct();
-    measurement.refl = double(squeeze(measured.refl(r, c, t, :)));
+    measurement.refl = squeeze(measured.refl(r, c, t, :));
     measurement.wl = measured.wl;
     if all(isnan(measurement.refl))
         continue
@@ -174,6 +171,7 @@ parfor j = 1 : n_spectra
 
     parameters(:, j) = results_j.parameters;
     rmse_all(j) = results_j.rmse;
+    exitflags(j) = results_j.exitflag;
     refl_mod(:,j) = results_j.refl_mod;
     refl_soil(:,j)  = results_j.soil_mod;
     sif_rad(:,j)  = results_j.sif;
@@ -187,11 +185,30 @@ parfor j = 1 : n_spectra
 
     parameters_std(:, j) = uncertainty_j.std_params;
     J_all(:,:,j) = uncertainty_j.J;
+%     uncertainty_j = 'does not matter if only .nc is written';
 
     %% send data to write and plot
-    send(q, {j, results_j, uncertainty_j, measurement})
+    if data_queue_present
+        send(q, {j, results_j, uncertainty_j, measurement})
+    end
     figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
 
+end
+
+
+%% writin for users with Matlab < 2017a => without parallel.pool.DataQueue;
+% writing at the end is faster than send() for j > 100, but less safe to errors
+
+if ~data_queue_present
+    disp('started writing to .nc')
+    sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times)
+    if isunix
+        warning('not yet writing to .csv on UNIX, only .nc will be written')
+        % path = io.initialize_csv(path, tab.variable);
+    else
+        disp('started writing to .xlsx')
+        io.save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
+    end
 end
 
 set(figures(1), 'Visible', 'on')

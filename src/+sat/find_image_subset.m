@@ -15,7 +15,6 @@ function [i_row, i_col] = find_image_subset(sensor, measured, x, y)
     warning(['Only a part of image (%1$d x %1$d around [%2$0.4f, %3$0.4f]) will be fit. ', ...
             'If you want to fit ALL pixels of the image set K == 0'], K,  pix_lat, pix_lon)
     
-        
     % find indices to subset refl
     if size(lat, 2) == 1  % goes together with lon
         [~, i_lat] = min(abs(lat - pix_lat));

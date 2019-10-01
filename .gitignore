@@ -1,10 +1,12 @@
 *.asv
+*.nc
 src/+local/
 measured/*
 output/*
 src/~$Input_data.xlsx
 src/Input_data.xlsx
 src/Input_data-default (synthetic).xlsx
+src/Input_data_altum.xlsx
 src/Input_data-working.xlsx
 src/Input_data_old_style.xlsx
 src/boundaries.csv

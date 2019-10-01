@@ -9,9 +9,11 @@ function out = read_netcdf_4d(nc_path, var_names)
     n_vars = length(nc_info.Variables);
     assert(length(nc_info.Dimensions) <= 3, ...
            'I do not operate with datacubes with more than 3 dimensions.')
-    nc_var_names = strings(n_vars, 1);
+%     nc_var_names = strings(n_vars, 1);  % > 2017b
+    nc_var_names = {}; % < 2017
     for i = 1:n_vars
-        nc_var_names(i) = nc_info.Variables(i).Name;
+%         nc_var_names(i) = nc_info.Variables(i).Name; % > 2017
+        nc_var_names{i} = nc_info.Variables(i).Name;  % < 2017
     end
     
     %% reflectance

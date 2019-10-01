@@ -20,7 +20,7 @@ function results = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor
 
     if any(tab.include)  % analogy of any(include == 1)
         tic
-        [paramsout,~,~,~,~,~,Jac]= lsqnonlin(f, params0, lb, ub, opt);
+        [paramsout,~,~,exitflag,~,~,Jac]= lsqnonlin(f, params0, lb, ub, opt);
         toc
     else % skip minimization and get resuls of RTMo_lite run with initial  parameters (param0)
         paramsout = params0;
@@ -38,5 +38,6 @@ function results = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor
     results.sif = fluo.SIF;
     results.sif_norm = fluo.SIFnorm;
     results.soil_mod = soil.refl_in_meas;
+    results.exitflag = exitflag;
     
 end

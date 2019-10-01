@@ -18,7 +18,8 @@ function tab = read_input_sheet(input_path)
     end
 
     %% sif include in fit all 4 components
-    i_sif = contains(tab.variable, 'SIF');
+    i_sif = contains(tab.variable, 'SIF');  % >= 2016a
+%     i_sif = ~cellfun(@isempty, strfind(tab.variable, 'SIF')); % <= 2015b
     if any(tab.include(i_sif))
         tab.include(i_sif) = 1;
     end
