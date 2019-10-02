@@ -145,12 +145,12 @@ end
 
 %% parallel
 %% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-N_proc = 3;
-if isempty(gcp('nocreate'))
-%     prof = parallel.importProfile('local_Copy.settings');
-%     parallel.defaultClusterProfile(prof);
-    parpool(N_proc, 'IdleTimeout', Inf);
-end
+% N_proc = 3;
+% if isempty(gcp('nocreate'))
+% %     prof = parallel.importProfile('local_Copy.settings');
+% %     parallel.defaultClusterProfile(prof);
+%     parpool(N_proc, 'IdleTimeout', Inf);
+% end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -162,7 +162,7 @@ warning(['You have %d spectra and asked for %d CPU(s). '...
 
 %% fitting
 %% change to parfor if you like
-parfor j = c
+for j = c
      fprintf('%d / %d', j, length(c))
     %% this part is done like it is to enable parfor loop
     measurement = struct();

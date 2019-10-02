@@ -13,6 +13,7 @@ spectral = fixed.spectral;
 sensors_path = fullfile('../input/sensors.xlsx');
 input_path = fullfile('Input_data.xlsx');
 % input_path = 'Input_data-default (synthetic).xlsx';
+% input_path = 'Input_data-Daniel.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -27,7 +28,12 @@ path.input_path = input_path;
 %% read reflectance
 % measured = sat.read_netcdf(path.image_path, var_names);
 measured = sat.read_netcdf_4d(path.image_path, var_names);
+if isa(measured.refl, 'single')  % lsqnonlin requirement
+    measured.refl = double(measured.refl);
+end
 measured.wl = band_wl;
+
+measured = sat.fill_angles(measured, sensor);
 
 % for propagation of uncertainty we need the initial uncertainty
 % n_bands = size(measured.refl, 3);
@@ -39,7 +45,6 @@ measured.std = ones(size(measured.refl)) * 0.01;
 i_row = 1 : x;
 i_col = 1 : y;
 
-%% TODO check that pixels are not super far from the image (on the brink + 1km), otherwise suggest coordinates change
 if sensor.K ~= 0 
     if all(isfield(measured, {'lat', 'lon'})) 
         [i_row, i_col] = sat.find_image_subset(sensor, measured, x, y);
@@ -95,8 +100,9 @@ path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, 
 
 data_queue_present = true;
 if verLessThan('matlab', '9.2')  % < R2017a
-    disp(['You are using matlab < R2017a, hence writing of the output will occur after )(par)for loop' ...
-        'In case of errors no output will be saved to output files. \n However it will be available in the workspace.'])
+    disp(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
+        'In case of errors no output will be saved to output files.\n' ... 
+        'However it will be available in the workspace.'])
     data_queue_present = false;
 else
     q = parallel.pool.DataQueue;
@@ -114,12 +120,12 @@ end
 
 %% parallel
 % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-N_proc = 3;
-if isempty(gcp('nocreate'))
-%     prof = parallel.importProfile('local_Copy.settings');
-%     parallel.defaultClusterProfile(prof);
-    parpool(N_proc);
-end
+% N_proc = 3;
+% if isempty(gcp('nocreate'))
+% %     prof = parallel.importProfile('local_Copy.settings');
+% %     parallel.defaultClusterProfile(prof);
+%     parpool(N_proc);
+% end
 
 %% time estimation
 if ~exist('N_proc', 'var')
@@ -127,16 +133,16 @@ if ~exist('N_proc', 'var')
 end
 eta = n_spectra * 7 / (N_proc * 60);
 fprintf(['You have %d pixels (%d pixels x %d times) and asked for %d CPU(s). '...
-    'Fitting will take about %.2f min (~7 s / pixel / CPU)'], ...
+    'Fitting will take about %.2f min (~7 s / pixel / CPU)\n'], ...
     n_spectra, n_row * n_col, n_times, N_proc, eta)
 
 %% fitting
 %% change to parfor if you like
-parfor j = 1 : n_spectra
+for j = 1 : n_spectra
     % remember that matlab counts column by column => second image pixel is below upper left corner
     % 1 3 5
     % 2 4 6
-    fprintf('%d / %d', j, n_spectra)
+    fprintf('%d / %d\n', j, n_spectra)
     [plane_r, plane_c, t] = ind2sub([n_row, n_col, n_times], j);
     r = i_row(plane_r);
     c = i_col(plane_c);
@@ -145,26 +151,30 @@ parfor j = 1 : n_spectra
     measurement = struct();
     measurement.refl = squeeze(measured.refl(r, c, t, :));
     measurement.wl = measured.wl;
+    
     if all(isnan(measurement.refl))
         continue
     end
     
-    if all(measurement.refl > 1000)
-        warning('skipping spectra %d because > 1000', j)
-        continue
+    if isfield(measured, 'qc')
+        if ~isempty(sensor.quality_flag_is)
+            if measured.qc(r, c, t) ~= sensor.quality_flag_is
+                fprintf('pixel %d did not pass quality flag is\n', j)
+                continue
+            end
+        end
+        if ~isempty(sensor.quality_flag_lt)
+            if measured.qc(r, c, t) >= sensor.quality_flag_lt
+                fprintf('pixel %d did not pass quality flag lt\n', j)
+                continue
+            end
+        end
     end
     
     angles = struct();
-    % TODO: cubes without viewing angles
-    if all(isfield(measured, {'oza', 'sza', 'raa'}))
-        angles.tto = measured.oza(r, c, t);
-        angles.tts = measured.sza(r, c, t);
-        angles.psi = measured.raa(r, c, t);
-    else
-        angles.tto = sensor.tto;
-        angles.tts = sensor.tts;
-        angles.psi = sensor.pis;
-    end
+    angles.tto = measured.oza(r, c, t);
+    angles.tts = measured.sza(r, c, t);
+    angles.psi = measured.raa(r, c, t);
 
     %% done, this is what comes out
     results_j = fit_spectra(measurement, tab, angles, irr_prospect, fixed, sensor);

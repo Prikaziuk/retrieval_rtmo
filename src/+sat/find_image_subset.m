@@ -12,9 +12,20 @@ function [i_row, i_col] = find_image_subset(sensor, measured, x, y)
         K = K + 1;
     end
 
-    warning(['Only a part of image (%1$d x %1$d around [%2$0.4f, %3$0.4f]) will be fit. ', ...
+    warning(['Only a part of image (%1$d x %1$d around [%2$0.4f, %3$0.4f]) will be fit.\n', ...
             'If you want to fit ALL pixels of the image set K == 0'], K,  pix_lat, pix_lon)
     
+    % check that coordinates are within the image
+    lat_step = abs(diff(lat));
+    lon_step = abs(diff(lon));
+    dif_lat = abs(lat - pix_lat);
+    dif_lon = abs(lon - pix_lon);
+    
+    if (min(dif_lat(:)) + min(dif_lon(:))) > (min(lat_step(:)) + min(lon_step(:)))  % dirty but works
+        error(['pixel (%.2f, %.2f) around which a K-buffer was requested is not within .nc file\n', ...
+            'Error is around %.2f meters'], pix_lat, pix_lon, (min(dif_lat(:)) + min(dif_lon(:))) * 111111)
+    end
+        
     % find indices to subset refl
     if size(lat, 2) == 1  % goes together with lon
         [~, i_lat] = min(abs(lat - pix_lat));

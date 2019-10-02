@@ -33,13 +33,23 @@ function path = initialize_nc_out(path, tab, x, y, z, band_names, measured, i_ro
     end
     
     %% coordinates
-    % TODO: possible inversion: lon is x and lat is y
     if all(isfield(measured, {'lat', 'lon'}))
         if size(measured.lat, 2) == 1
-            nccreate(nc_path, 'lat', 'Dimensions', {'x', x})
-            ncwrite(nc_path, 'lat', measured.lat(i_row))
-            nccreate(nc_path, 'lon', 'Dimensions', {'y', y})
-            ncwrite(nc_path, 'lon', measured.lon(i_col))
+            if size(measured.lat, 1) == size(measured.refl, 1) && ...
+                    size(measured.lon, 1) == size(measured.refl, 2)  % lat is dim1 (X), lon is dim2 (Y)
+                nccreate(nc_path, 'lat', 'Dimensions', {'x', x})
+                ncwrite(nc_path, 'lat', measured.lat(i_row))
+                nccreate(nc_path, 'lon', 'Dimensions', {'y', y})
+                ncwrite(nc_path, 'lon', measured.lon(i_col))
+            elseif size(measured.lat, 1) == size(measured.refl, 2) && ...
+                    size(measured.lon, 1) == size(measured.refl, 1)% lat is dim2 (Y), lon is dim1 (X)
+                nccreate(nc_path, 'lon', 'Dimensions', {'x', x})
+                ncwrite(nc_path, 'lon', measured.lon(i_row))
+                nccreate(nc_path, 'lat', 'Dimensions', {'y', y})
+                ncwrite(nc_path, 'lat', measured.lat(i_col))
+            else % lat is dim3 (time)
+                error('latitude or longitude is not along dim1 (x) or dim2 (y)')
+            end
         else
             nccreate(nc_path, 'lat', 'Dimensions', {'x', x, 'y', y})
             ncwrite(nc_path, 'lat', measured.lat(i_row, i_col))

@@ -45,27 +45,47 @@ function out = read_netcdf_4d(nc_path, var_names)
             out.lat = coords(:, :, :, 1);
             out.lon = coords(:, :, :, 2);
         else
-            out.lat = ncread(nc_path, {var_names.latitude});
-            out.lon = ncread(nc_path, {var_names.longitude});
+            out.lat = ncread(nc_path, var_names.latitude);
+            out.lon = ncread(nc_path, var_names.longitude);
         end
     end
     % dimensions of coordinates are not fixed can be 1d, 2d, 3d
     
     %% angles
-    angle_names_expected = {var_names.oaa, var_names.oza, var_names.saa, var_names.sza};
-    [angle_names, ~, ~] = intersect(angle_names_expected, nc_var_names, 'stable');
-    if length(angle_names) ~= length(angle_names_expected)
-        warning(['Ignore this warning if '... 
-            'you prefer to use constant geometry for all pixels (tto, tts, psi). \n' ...
-            'Bands with angles were not found in your .nc file. '], '')
-    else
-        angles = read_variable_4d(nc_path, angle_names);
-        % we are sure that the order is {oaa, oza, saa, sza} because we forced it in angle_names_expected
-        oaa = angles(:, :, :, 1);
-        saa = angles(:, :, :, 3);
+    
+    if ~isempty(var_names.sza)
+        out.sza = ncread(nc_path, var_names.sza);
+    end
+    
+    if ~isempty(var_names.oza)
+        out.oza = ncread(nc_path, var_names.oza);
+    end
+    
+    if ~isempty(var_names.saa) && ~isempty(var_names.oaa)
+        saa = ncread(nc_path, var_names.saa);
+        oaa = ncread(nc_path, var_names.oaa);
         out.raa = calc_psi(saa, oaa);
-        out.oza = angles(:, :, :, 2);
-        out.sza = angles(:, :, :, 4);
+    end
+    
+%     angle_names_expected = {var_names.oaa, var_names.oza, var_names.saa, var_names.sza};
+%     [angle_names, ~, ~] = intersect(angle_names_expected, nc_var_names, 'stable');
+%     if length(angle_names) ~= length(angle_names_expected)
+%         warning(['Ignore this warning if '... 
+%             'you prefer to use constant geometry for all pixels (tto, tts, psi). \n' ...
+%             'Bands with angles were not found in your .nc file. '], '')
+%     else
+%         angles = read_variable_4d(nc_path, angle_names);
+%         % we are sure that the order is {oaa, oza, saa, sza} because we forced it in angle_names_expected
+%         oaa = angles(:, :, :, 1);
+%         saa = angles(:, :, :, 3);
+%         
+%         out.oza = angles(:, :, :, 2);
+%         out.sza = angles(:, :, :, 4);
+%     end
+    
+    %% quality flags
+    if ~isempty(var_names.quality_flag_name)
+        out.qc = ncread(nc_path, var_names.quality_flag_name);
     end
     
     %% display image

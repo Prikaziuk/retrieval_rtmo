@@ -10,12 +10,11 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
         ['structure with name ' struct_name ' is not expected'])
     
     text2num  = {'tts', 'tto', 'psi', 'hot', 'pix_lat', 'pix_lon', 'K', ...
-                        'lat', 'lon', 'tz', 'summertime', ...
-                        'Rin', 'c', 'FWHM', 'wlmin', 'wlmax', 'skip_lines', 'timeseries'};
+                 'lat', 'lon', 'tz', 'summertime', ...
+                 'Rin', 'c', 'FWHM', 'wlmin', 'wlmax', 'skip_lines', 'timeseries', ...
+                 'quality_flag_is',  'quality_flag_lt'};
                     
-    optional = {'skip_lines', 'tts', 'reflectance_std', 'validation', 'Rin', 'soilfile', ...
-                'Esun', 'Esky', 'atmfile', ...
-                'tts_path', 'tto_path', 'psi_path', 'datetime_path', 'Rin_path', 'instrument_name'};
+    optional = {'Rin', 'Esun', 'Esky', 'atmfile'};
 
     % expected names from inputdata sheet (all numerical by default)
     variable_names.soil =  {'B', 'BSMlat', 'BSMlon', 'SMC'};
@@ -23,16 +22,21 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
     variable_names.canopy = {'LAI', 'LIDFa', 'LIDFb'};
     variable_names.sif = {'SIF_PC1', 'SIF_PC2', 'SIF_PC3', 'SIF_PC4'};
     
-    common_path = {'output_path', 'simulation_name', 'Esun', 'Esky', 'atmfile', 'soilfile'};
+    common_path = {'output_path', 'simulation_name', 'Esun', 'Esky', 'atmfile'};
     common_sensor = {'instrument_name', 'tts', 'tto', 'psi', 'hot', 'Rin'};
     if is_satellite
         % expected names from satellite sheet
+        optional = [optional, 'sza', 'oza', 'saa', 'oaa', 'latitude', 'longitude', ...
+            'quality_flag_name', 'quality_flag_is',  'quality_flag_lt'];
         variable_names.path = [common_path, {'image_path'}];
-        variable_names.var_names = {'sza', 'oza', 'saa', 'oaa', 'latitude', 'longitude'};
-        variable_names.sensor = [common_sensor, {'pix_lat', 'pix_lon', 'K'}];
+        variable_names.var_names = {'sza', 'oza', 'saa', 'oaa', 'latitude', 'longitude', 'quality_flag_name'};
+        variable_names.sensor = [common_sensor, {'pix_lat', 'pix_lon', 'K', 'quality_flag_is',  'quality_flag_lt'}];
     else    
         % expected names from filenames sheet
-        variable_names.path = [common_path, {'reflectance', 'reflectance_std', 'reflectance_wl', 'skip_lines', 'validation'}];                
+        optional = [optional,  'instrument_name',  'tts',  ...
+                'reflectance_std', 'validation', 'soilfile', ...
+                'tts_path', 'tto_path', 'psi_path', 'datetime_path', 'Rin_path'];
+        variable_names.path = [common_path, {'reflectance', 'reflectance_std', 'reflectance_wl', 'soilfile', 'validation'}];                
         variable_names.sensor = [common_sensor, {'c', 'FWHM', 'wlmin', 'wlmax', 'timeseries'}];
         variable_names.sun = {'lat', 'lon', 'datetime', 'tz'};
     end

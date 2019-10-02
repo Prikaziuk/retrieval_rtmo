@@ -13,7 +13,7 @@ function results = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor
     ub = tab.upper(iparams);
     
     stoptol = 1E-6;  % we recommend e-6
-    opt = optimset('MaxIter', 30, 'TolFun', stoptol);
+    opt = optimset('MaxIter', 30, 'TolFun', stoptol, 'DiffMinChange', 1E-2);
     
     %% function minimization
     f = @(params)COST_4SAIL_common(params, measurement,  tab, angles, irr_meas, fixed, sensor_in);
