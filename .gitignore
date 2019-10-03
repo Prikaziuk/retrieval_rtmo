@@ -1,5 +1,6 @@
 *.asv
 *.nc
+*.txt
 src/+local/
 measured/*
 output/*

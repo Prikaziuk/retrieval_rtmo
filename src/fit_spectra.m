@@ -13,14 +13,17 @@ function results = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor
     ub = tab.upper(iparams);
     
     stoptol = 1E-6;  % we recommend e-6
-    opt = optimset('MaxIter', 30, 'TolFun', stoptol, 'DiffMinChange', 1E-2);
+    opt = optimset('MaxIter', 30, 'TolFun', stoptol, ...
+                   'DiffMinChange', 1E-4); % works for float32 input
+                    % 'Display', 'iter');
+                   
     
     %% function minimization
     f = @(params)COST_4SAIL_common(params, measurement,  tab, angles, irr_meas, fixed, sensor_in);
 
     if any(tab.include)  % analogy of any(include == 1)
         tic
-        [paramsout,~,~,exitflag,~,~,Jac]= lsqnonlin(f, params0, lb, ub, opt);
+        [paramsout,~,~,exitflag,output,~,Jac]= lsqnonlin(f, params0, lb, ub, opt);
         toc
     else % skip minimization and get resuls of RTMo_lite run with initial  parameters (param0)
         paramsout = params0;

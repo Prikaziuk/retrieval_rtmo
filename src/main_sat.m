@@ -11,9 +11,9 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('../input/sensors.xlsx');
-input_path = fullfile('Input_data.xlsx');
+% input_path = fullfile('Input_data.xlsx');
 % input_path = 'Input_data-default (synthetic).xlsx';
-% input_path = 'Input_data-Daniel.xlsx';
+input_path = 'Input_data_S3.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -32,6 +32,9 @@ if isa(measured.refl, 'single')  % lsqnonlin requirement
     measured.refl = double(measured.refl);
 end
 measured.wl = band_wl;
+
+% sixs coefficients for S3
+% measured = read_sixs(path.image_path, sensor.i_srf, measured);
 
 measured = sat.fill_angles(measured, sensor);
 
@@ -171,6 +174,13 @@ for j = 1 : n_spectra
         end
     end
     
+    if isfield(measured, 'xa')
+        measurement.xa = squeeze(measured.xa(r, c, t, :));
+        measurement.xb = squeeze(measured.xb(r, c, t, :));
+        measurement.xc = squeeze(measured.xc(r, c, t, :));
+        measurement.rad = squeeze(measured.rad(r, c, t, :));
+    end
+    
     angles = struct();
     angles.tto = measured.oza(r, c, t);
     angles.tts = measured.sza(r, c, t);
@@ -221,4 +231,4 @@ if ~data_queue_present
     end
 end
 
-set(figures(1), 'Visible', 'on')
+% set(figures(1), 'Visible', 'on')
