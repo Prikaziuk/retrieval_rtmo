@@ -1,4 +1,4 @@
-function save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, extiflags, n_row, n_col, n_times)
+function save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, extiflags, n_row, n_col, n_times, include)
     
     nc_path = path.nc_path;
     nc_vars = path.nc_vars;
@@ -9,6 +9,7 @@ function save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, extiflags
     t = n_times;
     
     % tensors
+    parameters = parameters(include, :);  % we write only what was asked to fit
     parameters = permute(reshape(parameters, [size(parameters, 1), r, c, t]), [2 3 4 1]);
     refl_mod = permute(reshape(refl_mod, [size(refl_mod, 1), r, c, t]), [2 3 4 1]);
     

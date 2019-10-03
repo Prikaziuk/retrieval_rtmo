@@ -103,7 +103,7 @@ path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, 
 
 data_queue_present = true;
 if verLessThan('matlab', '9.2')  % < R2017a
-    disp(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
+    fprintf(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
         'In case of errors no output will be saved to output files.\n' ... 
         'However it will be available in the workspace.'])
     data_queue_present = false;
@@ -221,7 +221,7 @@ end
 
 if ~data_queue_present
     disp('started writing to .nc')
-    sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times)
+    sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times, tab.include)
     if isunix
         warning('not yet writing to .csv on UNIX, only .nc will be written')
         % path = io.initialize_csv(path, tab.variable);
