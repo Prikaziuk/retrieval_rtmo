@@ -1,7 +1,8 @@
 *.asv
 *.nc
 *.txt
-src/+local/
+*.pdf
+src/lut/
 measured/*
 output/*
 /input/sensors_george.xlsx

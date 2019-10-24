@@ -13,8 +13,10 @@ function uncertainty = propagate_uncertainty(paramsout, measurement, tab, angles
     J = clc_jacobian(tab.value, f_jac);
     J = J(measurement.i_fit,:);
 
-    % propagation of uncertainty in refl to uncertainty in variables?  
-    std = abs((inv(J.'*J)) * J.' * measurement.std(measurement.i_fit));
+    % propagation of uncertainty in refl to uncertainty in variables?
+    meas_std_fit = measurement.std(measurement.i_fit);
+    meas_std_fit(isnan(meas_std_fit)) = 0;
+    std = abs((inv(J.'*J)) * J.' * meas_std_fit);
 
     % propagation of uncertainty in variables to uncertainty in reflectance
     in_covar_mat = diag(tab.uncertainty);  % we do not have and do not need covariances

@@ -28,7 +28,8 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     leafbio.fqe(1)  = 0.02 / 5;
     leafbio.V2Z     = 0;
 
-    leafopt        = models.fluspect_B_CX_PSI_PSII_combined(spectral, leafbio, optipar);
+%     leafopt = models.fluspect_B_CX_PSI_PSII_combined(spectral, leafbio, optipar);
+    leafopt = models.fluspect_lite(spectral, leafbio, optipar);
 
     %% soil reflectance - BSM
     soilemp.SMC   = 25;        % empirical parameter (fixed) [soil moisture content]

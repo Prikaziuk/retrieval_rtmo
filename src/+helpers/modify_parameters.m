@@ -11,6 +11,6 @@ function values = modify_parameters(values, varnames)
     i_lidfb = strcmp('LIDFb', varnames);
     lidfa = values(i_lidfa);
     lidfb = values(i_lidfb);
-    values(i_lidfa) = (lidfa + lidfb);
-    values(i_lidfb) = (lidfa - lidfb);
+    values(i_lidfa) = lidfa + lidfb;
+    values(i_lidfb) = lidfa - lidfb;
 end

@@ -222,7 +222,8 @@ if ~isempty(path.validation)
         measured.val = measured.val(1, [1 c + 1]);
         parameters = parameters(:, c);    
     end
-    plot.modelled2measured(parameters, tab, measured.val, graph_name)
+%     plot.modelled2measured(parameters, tab, measured.val, graph_name, true)
+    plot.modelled2measured_sd(parameters, tab, measured.val, graph_name, parameters_std, true)
 end
 
 %% see figures you want (replace c(1) with the spectrum number)

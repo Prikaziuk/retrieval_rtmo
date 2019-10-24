@@ -20,7 +20,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
 
     %% find groups based on column names
     names_spl = split(names, '_');                      % split column headers by '_'
-    [groups, ~, group_id] = unique(names_spl(:,:, 1));  % see if there is any logic behind colnames
+    [groups, ~, group_id] = unique(names_spl(:,:, 1), 'stable');  % see if there is any logic behind colnames
     n_spectra = size(measured, 2);
     if length(groups) < n_spectra
         n_colors = length(groups);
@@ -28,7 +28,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
     else
         n_colors = n_spectra;
         group_id = 1:n_colors;
-        color_names = cellstr(num2str(group_id'));
+        color_names =  groups; % cellstr(num2str(group_id')) % to display column numbers
     end
     if filled
         scatter_my = @(meas, mod) scatter(meas, mod, 100, group_id, 'filled');
@@ -49,7 +49,7 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
     min_val = tab.lower(i_mod);
     max_val = tab.upper(i_mod);
     
-    figure(1e9)  % to prevent overlapping with any other figures
+    figure(1e8)  % to prevent overlapping with any other figures
     for i = 1:length(vars)
         subplot(n_row, n_col, i)
         mod = modelled(i_mod(i), :);
@@ -63,8 +63,9 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         i_nans = isnan(meas);
         lm_full = fitlm(meas(~i_nans), mod(~i_nans));   
         lm = polyfit(meas(~i_nans), mod(~i_nans), 1);
-        fit = polyval(lm, meas);
-        plot(meas(~i_nans), fit(~i_nans), 'r:')  % refline(lm(1), lm(2)) % lsline()
+        predict_x = [min_val(i), max_val(i)];
+        fit = polyval(lm, predict_x);
+        plot(predict_x, fit, 'r:')  % refline(lm(1), lm(2)) % lsline()
         % metrics
         rmse = sqrt(nanmean((meas-mod) .^ 2));
         bias = nanmean(mod - meas);
@@ -73,8 +74,8 @@ function modelled2measured(modelled, tab, measured_tab, graph_name, filled)
         xlabel('measured')
         ylabel('modelled')
         hold on
-        refline(1, 0)
         axis([min_val(i), max_val(i), min_val(i), max_val(i)])
+        refline(1, 0)
     end
     
     if verLessThan('matlab', '9.5')

@@ -10,7 +10,7 @@ function tab = modify_tab_parameters(tab)
     
     %% modify LIDFs
     % abs(LIDFa + LIDFb) <= 1
-    % to make it possible LIDFa = LIDFa + LIDFb, LIDFb = LIDFb - LIDFb
+    % to make it possible LIDFa = LIDFa + LIDFb, LIDFb = LIDFa - LIDFb
     i_lidfa = strcmp(tab.variable, 'LIDFa');
     i_lidfb = strcmp(tab.variable, 'LIDFb');
     lidfa = tab.value(i_lidfa);

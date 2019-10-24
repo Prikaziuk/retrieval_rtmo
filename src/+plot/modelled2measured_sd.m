@@ -1,10 +1,13 @@
-function modelled2measured_sd(modelled, tab, measured_tab, graph_name, filled)
+function modelled2measured_sd(modelled, tab, measured_tab, graph_name, modelled_sd, filled)
 
     %% to fill or not to fill (to make number visible)
     filled = true;
-    if nargin < 5
+    if nargin < 6
         filled = false;
     end
+    
+    % don't want Jacobian sd - uncomment
+%     modelled_sd = zeros(size(modelled));
     
     %% measured data from table to matrix, keep names 
     measured_names = table2array(measured_tab(:, 1));
@@ -42,7 +45,7 @@ function modelled2measured_sd(modelled, tab, measured_tab, graph_name, filled)
     else
         n_colors = n_spectra;
         group_id = 1:n_colors;
-        color_names = cellstr(num2str(group_id'));
+        color_names = groups; % cellstr(num2str(group_id')) % to display column numbers
         empty_meas_cols = all(isnan(measured), 1);
         if any(empty_meas_cols)
             % removing extra colors because NaNs will not be displayed
@@ -84,6 +87,14 @@ function modelled2measured_sd(modelled, tab, measured_tab, graph_name, filled)
             e.MarkerFaceColor='w';
             e.Color = 'k';
             hold on
+            
+            sd_jac = modelled_sd(i_mod(i), :);
+            e = errorbar(meas, mod, sd_jac, 'vertical', 'o');
+            e.MarkerSize = 10;
+            e.MarkerFaceColor='w';
+            e.Color = 'k';
+            hold on
+            
         end
         s = scatter_my(meas, mod);
         s.MarkerEdgeColor='k';
