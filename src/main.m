@@ -116,7 +116,14 @@ figures = gobjects(n_spectra,1);
 J_all = zeros(n_fit_wl, n_params, n_spectra);
 
 %% start saving
-q = parallel.pool.DataQueue;
+data_queue_present = true;
+if verLessThan('matlab', '9.2')  % < R2017a
+    q = 'could be parallel.pool.DataQueue';
+    data_queue_present = false;
+else
+    q = parallel.pool.DataQueue;
+end
+
 if isunix
     path = io.create_output_folder(path);
     path = io.initialize_csv(path, tab.variable);
@@ -203,9 +210,11 @@ for j = c
     figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
     
     %% send data to write and plot
-%     send(q, {j, results_j, uncertainty_j, measurement})  
-%     send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
-%     io.save_output_csv(rmse_all, parameters, parameters_std, path)
+%     if data_queue_present
+    %     send(q, {j, results_j, uncertainty_j, measurement})  
+    %     send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
+    %     io.save_output_csv(rmse_all, parameters, parameters_std, path)
+%     end
 
 end
 
