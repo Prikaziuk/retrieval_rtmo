@@ -11,7 +11,7 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-input_path = 'Input_data.xlsx';
+input_path = 'Input_data_senseco.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -232,4 +232,5 @@ set(figures(c(1)), 'Visible', 'on')
 %% plot from the output xlsx file
 
 % plot.replot_all(your_output_xlsx_file, your_validation_path)
+% plot.replot_all(path.xlsx_path, path.validation)
 

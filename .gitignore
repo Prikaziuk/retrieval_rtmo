@@ -2,6 +2,8 @@
 *.nc
 *.txt
 *.pdf
+*.mat
+*.csv
 src/lut/
 measured/*
 output/*

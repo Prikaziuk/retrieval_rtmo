@@ -3,7 +3,7 @@ function [params, params_std] = select_best_lut(threshold)
 rmses = load('rmses.mat');
 rmses = rmses.rmses;
 
-params_in = readtable('lut_in.csv');
+params_in = readtable('lut/lut_in.csv');
 par_names = params_in.Properties.VariableNames;
 par_vals = table2array(params_in);
 
@@ -31,8 +31,8 @@ for i=1:n_spectra
 %     params_std(:, i) = std(par_best)';
 end
 
-% writetable([tab.variable(tab.include), array2table(params)], 'params.csv')
-% writetable([tab.variable(tab.include), array2table(params_std)], 'params_std.csv')
+% writetable([tab.variable(tab.include), array2table(params)], 'params_03.csv')
+% writetable([tab.variable(tab.include), array2table(params_std)], 'params_std_03.csv')
 
 
 % lut_params = parameters;

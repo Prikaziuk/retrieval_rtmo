@@ -1,7 +1,7 @@
 function rmses = search_in_lut(measured, lut)
 
     if nargin < 2
-        lut = load('lut.mat');
+        lut = load('lut/lut.mat');
         lut = lut.lut;
     end
 
