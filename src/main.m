@@ -11,7 +11,7 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-input_path = 'Input_data_senseco.xlsx';
+input_path = 'Input_data.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
