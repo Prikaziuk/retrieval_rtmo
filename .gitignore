@@ -4,6 +4,7 @@
 *.pdf
 *.mat
 *.csv
+src/loop_cubes*
 src/lut/
 measured/*
 output/*
