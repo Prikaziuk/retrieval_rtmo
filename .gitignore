@@ -1,4 +1,7 @@
 *.prj
+*.log
+*.mlx
+*.html
 *.asv
 *.nc
 *.txt

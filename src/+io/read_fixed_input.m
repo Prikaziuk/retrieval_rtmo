@@ -1,6 +1,5 @@
 function fixed = read_fixed_input()
 
-
     %% define spectral regions
     spectral.wlP = 400:1:2400;                      % PROSPECT data range
     spectral.wlE = 400:1:750;                       % excitation in E-F matrix

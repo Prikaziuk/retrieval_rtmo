@@ -3,8 +3,10 @@
 close all
 clear all
 
-%% read fixed input
+%% check compatibility
+data_queue_present = helpers.check_compatibility();
 
+%% read fixed input
 fixed = io.read_fixed_input();
 spectral = fixed.spectral;
 
@@ -113,14 +115,6 @@ figures = gobjects(n_spectra,1);
 J_all = zeros(n_fit_wl, n_params, n_spectra);
 
 %% start saving
-data_queue_present = true;
-if verLessThan('matlab', '9.2')  % < R2017a
-    q = 'could be parallel.pool.DataQueue';
-    data_queue_present = false;
-else
-    q = parallel.pool.DataQueue;
-end
-
 if isunix
     path = io.create_output_folder(path);
     path = io.initialize_csv(path, tab.variable);
@@ -139,13 +133,21 @@ if isunix
     tmp_zeros_meas.i_sif = measured.i_sif;
 
     io.save_output_csv(0, tmp_zeros_res, tmp_zeros_unc, tmp_zeros_meas, path)
-    afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
+    if data_queue_present
+        q = parallel.pool.DataQueue;
+        afterEach(q, @(x) io.save_output_csv(x{1}, x{2}, x{3}, x{4}, path));
+    end
 else
     path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra);
-    afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+    if data_queue_present
+        q = parallel.pool.DataQueue;
+        afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+    end
 end
 %% safely writing data from (par)for loop
-% afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+% if data_queue_present
+%     afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+% end
 
 %% fitting
 if ~isempty(path.lut_path)
@@ -189,15 +191,6 @@ if ~isempty(path.lut_path)
     end
 else
     warning('Fitting with numerical optimization')
-    %% parallel
-    %% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-    % N_proc = 3;
-    % if isempty(gcp('nocreate'))
-    % %     prof = parallel.importProfile('local_Copy.settings');
-    % %     parallel.defaultClusterProfile(prof);
-    %     parpool(N_proc, 'IdleTimeout', Inf);
-    % end
-
     %% time estimation
     if ~exist('N_proc', 'var')
         N_proc = 1;
@@ -205,7 +198,8 @@ else
     eta = n_spectra * 10 / (N_proc * 60);
     fprintf(['You have %d spectra and asked for %d CPU(s). '...
         'Fitting will take about %.2f min (~10 s / spectra / CPU)\n'], n_spectra, N_proc, eta)
-    %% change to parfor if you like
+    
+    %% change to parfor if you can
     for j = c
          fprintf('%d / %d', j, length(c))
         %% this part is done like it is to enable parfor loop
@@ -228,7 +222,6 @@ else
         results_j = fit_spectra(measurement, tab, angles, irr_meas, fixed, sensor_in);
 
         %% record to keep in the workspace
-
         parameters(:, j) = results_j.parameters;
         rmse_all(j) = results_j.rmse;
         refl_mod(:,j) = results_j.refl_mod;
@@ -247,11 +240,11 @@ else
         figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
 
         %% send data to write and plot
-    %     if data_queue_present
-        %     send(q, {j, results_j, uncertainty_j, measurement})  
-        %     send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
-        %     io.save_output_csv(rmse_all, parameters, parameters_std, path)
-    %     end
+%         if data_queue_present
+%             send(q, {j, results_j, uncertainty_j, measurement})  
+%             send(q, {j, results_j.rmse, results_j.parameters, uncertainty_j})
+%             io.save_output_csv(rmse_all, parameters, parameters_std, path)
+%         end
 
     end
     %% see figures you want (replace c(1) with the spectrum number)
@@ -264,8 +257,7 @@ if ~isempty(path.validation)
     graph_name = [path.simulation_name, ' ', sensor.instrument_name];
     n_val = size(measured.val, 2) - 1;
     if length(c) < n_val
-        % this ploting is not designed for one value but we hack
-        % it to do so for you
+        % this ploting is not designed for one value but we hack it to do so for you
         measured.val = measured.val(:, [1 c + 1]);
         parameters = parameters(:, c);    
     end

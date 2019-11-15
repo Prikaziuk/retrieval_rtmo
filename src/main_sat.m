@@ -3,15 +3,17 @@
 close all
 clear all
 
+%% check compatibility
+data_queue_present = helpers.check_compatibility();
+write_after_loop = true;
+
 %% fixed input (constants)
-
 fixed = io.read_fixed_input();
-
 spectral = fixed.spectral;
 
 %% read input file
-sensors_path = fullfile('../input/sensors.xlsx');
-input_path = fullfile('Input_data.xlsx');
+sensors_path = fullfile('..', 'input', 'sensors.xlsx');
+input_path = 'Input_data.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
 % input_path = 'Input_data_S3.xlsx';
 
@@ -94,14 +96,10 @@ J_all = nan(n_wl, n_params, n_spectra);  % we fit all wl we have
 figures = gobjects(n_spectra,1);
 
 %% start saving
-
 path = io.create_output_folder(path);
-
 path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
 
 %% fitting
-data_queue_present = false;
-
 if ~isempty(path.lut_path)
     % TODO: with 3d nc will fail
     warning('Fitting with look-up table')
@@ -144,35 +142,30 @@ if ~isempty(path.lut_path)
 %     angles_single.psi = 0; % sensor.psi;
 else
     warning('Fitting with numerical optimization')
+    
     %% safely writing and plotting data from (par)for loop
-%     data_queue_present = true;
-%     if true % verLessThan('matlab', '9.2')  % < R2017a
-%         fprintf(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
-%             'In case of errors no output will be saved to output files.\n' ... 
-%             'However it will be available in the workspace.\n'])
-%         data_queue_present = false;
-%     else
-%         q = parallel.pool.DataQueue;
-%         if isunix
-%             warning('not yet writing to .csv on UNIX, only .nc will be written')
-%             % path = io.initialize_csv(path, tab.variable);
-%         else
-%             path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra, spectral.wlF');
-%             afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-%         end
-%         afterEach(q, @(x) sat.save_output_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, path));
-%         % it is not funny plotting all pixels!
-%         % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
-%     end
-
-    %% parallel
-    % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-    % N_proc = 3;
-    % if isempty(gcp('nocreate'))
-    % %     prof = parallel.importProfile('local_Copy.settings');
-    % %     parallel.defaultClusterProfile(prof);
-    %     parpool(N_proc);
-    % end
+    if write_after_loop
+        fprintf(['Writing of the output will occur after (par)for loop\n' ...
+            'In case of errors no output will be saved to output files.\n' ... 
+            'However it will be available in the workspace.\n'])
+    elseif data_queue_present
+        q = parallel.pool.DataQueue;
+        if isunix
+            fprintf('not yet writing to .csv on UNIX, only .nc will be written')
+            % path = io.initialize_csv(path, tab.variable);
+        else
+            path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra, spectral.wlF');
+            % afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+        end
+        afterEach(q, @(x) sat.save_output_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, path));
+        % it is not funny plotting all pixels!
+        % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+    else
+        fprintf(['You do not have parallel.pool.DataQueue, so\n'...
+            'Writing of the output will occur after (par)for loop\n' ...
+            'In case of errors no output will be saved to output files.\n' ... 
+            'However it will be available in the workspace.\n'])
+    end
 
     %% time estimation
     if ~exist('N_proc', 'var')
@@ -183,6 +176,7 @@ else
         'Fitting will take about %.2f min (~7 s / pixel / CPU)\n'], ...
         n_spectra, n_row * n_col, n_times, N_proc, eta)
     
+    %% change to parfor if you can
     % NumOpt fitting
     for j = 1 : n_spectra
         % remember that matlab counts column by column => second image pixel is below upper left corner
@@ -251,9 +245,9 @@ else
     %     uncertainty_j = 'does not matter if only .nc is written';
 
         %% send data to write and plot
-        if data_queue_present
-            send(q, {j, results_j, uncertainty_j, measurement})
-        end
+%         if data_queue_present && ~write_after_loop
+%             send(q, {j, results_j, uncertainty_j, measurement})
+%         end
 %         figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
 
     end
@@ -262,16 +256,16 @@ end
 %% writing for users with Matlab < 2017a => without parallel.pool.DataQueue;
 % writing at the end is faster than send() for j > 100, but less safe to errors
 
-if ~data_queue_present
+if write_after_loop
     fprintf('writing .nc to %s\n', path.nc_path)
     sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times, tab.include)
-    if isunix
-        warning('not yet writing to .csv on UNIX, only .nc will be written')
-        % path = io.initialize_csv(path, tab.variable);
-    else
+%     if isunix
+%         warning('not yet writing to .csv on UNIX, only .nc will be written')
+%         path = io.initialize_csv(path, tab.variable);
+%     else
 %         disp('started writing to .xlsx')
 %         io.save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
-    end
+%     end
 end
 
 % set(figures(1), 'Visible', 'on')

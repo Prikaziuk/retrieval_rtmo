@@ -14,7 +14,7 @@ function [measured, tab, angles, irr_meas, fixed, sensor] = synthetic_input()
     angles.psi = sensor.psi;
 
     %% read irradiance
-    path.atmfile = '..\input\radiationdata\FLEX-S3_std.atm';
+    path.atmfile = fullfile('..', 'input', 'radiationdata', 'FLEX-S3_std.atm');
     irradiance = io.read_irradiance(path);
 
     %% subset irradiance to measurements (FWHM, SRF)
