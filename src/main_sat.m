@@ -99,135 +99,178 @@ path = io.create_output_folder(path);
 
 path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
 
-%% safely writing and plotting data from (par)for loop
-
-data_queue_present = true;
-if verLessThan('matlab', '9.2')  % < R2017a
-    fprintf(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
-        'In case of errors no output will be saved to output files.\n' ... 
-        'However it will be available in the workspace.'])
-    data_queue_present = false;
-else
-    q = parallel.pool.DataQueue;
-    if isunix
-        warning('not yet writing to .csv on UNIX, only .nc will be written')
-        % path = io.initialize_csv(path, tab.variable);
-    else
-        path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra, spectral.wlF');
-        afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
-    end
-    afterEach(q, @(x) sat.save_output_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, path));
-    % it is not funny plotting all pixels!
-    % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
-end
-
-%% parallel
-% uncomment these lines, select N_proc you want, change for-loop to parfor-loop
-% N_proc = 3;
-% if isempty(gcp('nocreate'))
-% %     prof = parallel.importProfile('local_Copy.settings');
-% %     parallel.defaultClusterProfile(prof);
-%     parpool(N_proc);
-% end
-
-%% time estimation
-if ~exist('N_proc', 'var')
-    N_proc = 1;
-end
-eta = n_spectra * 7 / (N_proc * 60);
-fprintf(['You have %d pixels (%d pixels x %d times) and asked for %d CPU(s). '...
-    'Fitting will take about %.2f min (~7 s / pixel / CPU)\n'], ...
-    n_spectra, n_row * n_col, n_times, N_proc, eta)
-
 %% fitting
-%% change to parfor if you like
-for j = 1 : n_spectra
-    % remember that matlab counts column by column => second image pixel is below upper left corner
-    % 1 3 5
-    % 2 4 6
-    fprintf('%d / %d\n', j, n_spectra)
-    [plane_r, plane_c, t] = ind2sub([n_row, n_col, n_times], j);
-    r = i_row(plane_r);
-    c = i_col(plane_c);
-    
-    %% this part is done like it is to enable parfor loop
-    measurement = struct();
-    measurement.refl = squeeze(measured.refl(r, c, t, :));
-    measurement.wl = measured.wl;
-    
-    if all(isnan(measurement.refl))
-        continue
-    end
-    
+data_queue_present = false;
+
+if ~isempty(path.lut_path)
+    % TODO: with 3d nc will fail
+    warning('Fitting with look-up table')
+
+    qc_i = true([n_spectra, 1]);
     if isfield(measured, 'qc')
+        fprintf('Filtering with quality flag\n')
+        qc = reshape(measured.qc(i_row, i_col, :), [n_spectra, 1]);
+        qc_good_is = true(size(qc));
         if ~isempty(sensor.quality_flag_is)
-            if measured.qc(r, c, t) ~= sensor.quality_flag_is
-                fprintf('pixel %d did not pass quality flag is\n', j)
-                continue
-            end
+            qc_good_is = (qc == sensor.quality_flag_is);
         end
+        qc_good_lt = true(size(qc));
         if ~isempty(sensor.quality_flag_lt)
-            if measured.qc(r, c, t) >= sensor.quality_flag_lt
-                fprintf('pixel %d did not pass quality flag lt\n', j)
-                continue
+            qc_good_lt = (qc < sensor.quality_flag_lt);
+        end
+        qc_i = qc_good_is & qc_good_lt;
+    end
+    
+    if sum(~qc_i) == n_spectra
+        warning('All pixels were filtered out by quality flag, nothing left to fit')
+        return
+    end
+    
+    fprintf(['You have %d pixels. '...
+        'Fitting will take about %.2f min (~0.0000175 s / pixel / CPU)\n'], ...
+        sum(qc_i), sum(qc_i) * 0.0000175)
+    
+    measured.refl = reshape(measured.refl(i_row, i_col, :, :), [n_spectra, n_wl]);
+    measured.refl = measured.refl(qc_i, :);
+    tic
+    [params, params_std, rmse_lut, spec, spec_sd] = fit_spectra_lut(path, measured, tab);
+    toc
+    parameters(:, qc_i) = params;
+    parameters_std(:, qc_i) = params_std;
+    rmse_all(qc_i) = rmse_lut;
+    refl_mod(:, qc_i) = spec;  % better to run forward again but on 500k no way
+%     angles_single.tts = sensor.tts;
+%     angles_single.tto = 0; % sensor.tto;
+%     angles_single.psi = 0; % sensor.psi;
+else
+    warning('Fitting with numerical optimization')
+    %% safely writing and plotting data from (par)for loop
+%     data_queue_present = true;
+%     if true % verLessThan('matlab', '9.2')  % < R2017a
+%         fprintf(['You are using matlab < R2017a, hence writing of the output will occur after (par)for loop\n' ...
+%             'In case of errors no output will be saved to output files.\n' ... 
+%             'However it will be available in the workspace.\n'])
+%         data_queue_present = false;
+%     else
+%         q = parallel.pool.DataQueue;
+%         if isunix
+%             warning('not yet writing to .csv on UNIX, only .nc will be written')
+%             % path = io.initialize_csv(path, tab.variable);
+%         else
+%             path = io.initialize_xlsx_out(path, measured, tab.variable, n_spectra, spectral.wlF');
+%             afterEach(q, @(x) io.save_output_j(x{1}, x{2}, x{3}, x{4}, path));
+%         end
+%         afterEach(q, @(x) sat.save_output_nc_j(x{1}, x{2}, x{3}, x{4}, tab, n_row, n_col, n_times, path));
+%         % it is not funny plotting all pixels!
+%         % afterEach(q, @(x) plot.plot_j(x{1}, x{2}, x{3}, x{4}, tab));
+%     end
+
+    %% parallel
+    % uncomment these lines, select N_proc you want, change for-loop to parfor-loop
+    % N_proc = 3;
+    % if isempty(gcp('nocreate'))
+    % %     prof = parallel.importProfile('local_Copy.settings');
+    % %     parallel.defaultClusterProfile(prof);
+    %     parpool(N_proc);
+    % end
+
+    %% time estimation
+    if ~exist('N_proc', 'var')
+        N_proc = 1;
+    end
+    eta = n_spectra * 7 / (N_proc * 60);
+    fprintf(['You have %d pixels (%d pixels x %d times) and asked for %d CPU(s). '...
+        'Fitting will take about %.2f min (~7 s / pixel / CPU)\n'], ...
+        n_spectra, n_row * n_col, n_times, N_proc, eta)
+    
+    % NumOpt fitting
+    for j = 1 : n_spectra
+        % remember that matlab counts column by column => second image pixel is below upper left corner
+        % 1 3 5
+        % 2 4 6
+        fprintf('%d / %d\n', j, n_spectra)
+        [plane_r, plane_c, t] = ind2sub([n_row, n_col, n_times], j);
+        r = i_row(plane_r);
+        c = i_col(plane_c);
+
+        %% this part is done like it is to enable parfor loop
+        measurement = struct();
+        measurement.refl = squeeze(measured.refl(r, c, t, :));
+        measurement.wl = measured.wl;
+
+        if all(isnan(measurement.refl))
+            continue
+        end
+
+        if isfield(measured, 'qc')
+            if ~isempty(sensor.quality_flag_is)
+                if measured.qc(r, c, t) ~= sensor.quality_flag_is
+                    fprintf('pixel %d did not pass quality flag is\n', j)
+                    continue
+                end
+            end
+            if ~isempty(sensor.quality_flag_lt)
+                if measured.qc(r, c, t) >= sensor.quality_flag_lt
+                    fprintf('pixel %d did not pass quality flag lt\n', j)
+                    continue
+                end
             end
         end
+
+        if isfield(measured, 'xa')
+            measurement.xa = squeeze(measured.xa(r, c, t, :));
+            measurement.xb = squeeze(measured.xb(r, c, t, :));
+            measurement.xc = squeeze(measured.xc(r, c, t, :));
+            measurement.rad = squeeze(measured.rad(r, c, t, :));
+        end
+
+        angles = struct();
+        angles.tto = measured.oza(r, c, t);
+        angles.tts = measured.sza(r, c, t);
+        angles.psi = measured.raa(r, c, t);
+
+        %% done, this is what comes out
+        results_j = fit_spectra(measurement, tab, angles, irr_prospect, fixed, sensor);
+
+        parameters(:, j) = results_j.parameters;
+        rmse_all(j) = results_j.rmse;
+        exitflags(j) = results_j.exitflag;
+        refl_mod(:,j) = results_j.refl_mod;
+        refl_soil(:,j)  = results_j.soil_mod;
+        sif_rad(:,j)  = results_j.sif;
+        sif_norm(:,j) = results_j.sif_norm;
+
+        %% uncertainty in parameters
+        measurement.std = squeeze(measured.std(r, c, t, :)); %(:, j);
+        measurement.i_fit = true(size(measured.wl));  % we are fitting all provided wl
+
+        uncertainty_j = propagate_uncertainty(results_j.parameters, measurement, tab, angles, irr_prospect, fixed, sensor);
+
+        parameters_std(:, j) = uncertainty_j.std_params;
+        J_all(:,:,j) = uncertainty_j.J;
+    %     uncertainty_j = 'does not matter if only .nc is written';
+
+        %% send data to write and plot
+        if data_queue_present
+            send(q, {j, results_j, uncertainty_j, measurement})
+        end
+%         figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
+
     end
-    
-    if isfield(measured, 'xa')
-        measurement.xa = squeeze(measured.xa(r, c, t, :));
-        measurement.xb = squeeze(measured.xb(r, c, t, :));
-        measurement.xc = squeeze(measured.xc(r, c, t, :));
-        measurement.rad = squeeze(measured.rad(r, c, t, :));
-    end
-    
-    angles = struct();
-    angles.tto = measured.oza(r, c, t);
-    angles.tts = measured.sza(r, c, t);
-    angles.psi = measured.raa(r, c, t);
-
-    %% done, this is what comes out
-    results_j = fit_spectra(measurement, tab, angles, irr_prospect, fixed, sensor);
-
-    parameters(:, j) = results_j.parameters;
-    rmse_all(j) = results_j.rmse;
-    exitflags(j) = results_j.exitflag;
-    refl_mod(:,j) = results_j.refl_mod;
-    refl_soil(:,j)  = results_j.soil_mod;
-    sif_rad(:,j)  = results_j.sif;
-    sif_norm(:,j) = results_j.sif_norm;
-
-    %% uncertainty in parameters
-    measurement.std = squeeze(measured.std(r, c, t, :)); %(:, j);
-    measurement.i_fit = true(size(measured.wl));  % we are fitting all provided wl
-
-    uncertainty_j = propagate_uncertainty(results_j.parameters, measurement, tab, angles, irr_prospect, fixed, sensor);
-
-    parameters_std(:, j) = uncertainty_j.std_params;
-    J_all(:,:,j) = uncertainty_j.J;
-%     uncertainty_j = 'does not matter if only .nc is written';
-
-    %% send data to write and plot
-    if data_queue_present
-        send(q, {j, results_j, uncertainty_j, measurement})
-    end
-    figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
-
 end
 
-
-%% writin for users with Matlab < 2017a => without parallel.pool.DataQueue;
+%% writing for users with Matlab < 2017a => without parallel.pool.DataQueue;
 % writing at the end is faster than send() for j > 100, but less safe to errors
 
 if ~data_queue_present
-    disp('started writing to .nc')
+    fprintf('writing .nc to %s\n', path.nc_path)
     sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times, tab.include)
     if isunix
         warning('not yet writing to .csv on UNIX, only .nc will be written')
         % path = io.initialize_csv(path, tab.variable);
     else
-        disp('started writing to .xlsx')
-        io.save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
+%         disp('started writing to .xlsx')
+%         io.save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
     end
 end
 

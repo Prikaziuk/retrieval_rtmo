@@ -1,3 +1,4 @@
+*.prj
 *.asv
 *.nc
 *.txt
@@ -12,3 +13,5 @@ output/*
 src/~$Input_data*.xlsx
 src/Input_data*.xlsx
 src/boundaries.csv
+lut/
+synthetic/

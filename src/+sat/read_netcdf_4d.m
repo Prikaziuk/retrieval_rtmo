@@ -18,9 +18,11 @@ function out = read_netcdf_4d(nc_path, var_names)
     
     %% reflectance
     [band_names, ~, ~] = intersect(var_names.bands, nc_var_names, 'stable');
-    assert(length(band_names) == length(var_names.bands), ...
-        ['some band names you specified were not found in your .nc file. '...
-        'Did you misspell band name on `bands` sheet?'])
+    if length(band_names) ~= length(var_names.bands)
+        missing = setdiff(var_names.bands, band_names);
+        error(['some band names (%s) you specified were not found in your .nc file. '...
+        'Did you misspell band name on `bands` sheet?'], [missing{:}])
+    end
     % if some bands have different sizes cat will collapse
     refl = read_variable_4d(nc_path, band_names);
     

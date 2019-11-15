@@ -87,15 +87,14 @@ function modelled2measured_sd(modelled, tab, measured_tab, graph_name, modelled_
             e.MarkerFaceColor='w';
             e.Color = 'k';
             hold on
-            
-            sd_jac = modelled_sd(i_mod(i), :);
-            e = errorbar(meas, mod, sd_jac, 'vertical', 'o');
-            e.MarkerSize = 10;
-            e.MarkerFaceColor='w';
-            e.Color = 'k';
-            hold on
-            
         end
+        sd_jac = modelled_sd(i_mod(i), :);
+        e = errorbar(meas, mod, sd_jac, 'vertical', 'o');
+        e.MarkerSize = 10;
+        e.MarkerFaceColor='w';
+        e.Color = 'k';
+        hold on
+            
         s = scatter_my(meas, mod);
         s.MarkerEdgeColor='k';
         for j = 1:n_spectra

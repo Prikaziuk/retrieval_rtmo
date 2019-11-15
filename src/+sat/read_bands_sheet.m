@@ -15,6 +15,14 @@ function [band_names, band_wl, i_srf] = read_bands_sheet(input_path)
            'Required at least: ' sprintf('`%s`, ', expected_cols{:})])
     
     i_absent_bands = cellfun(@(x) isempty(x), bands.your_names);
+    if any(i_absent_bands)
+        if verLessThan('matlab', '9.1')  % < 2016b
+            bands_in = '';
+        else
+            bands_in = strjoin(bands.your_names(~i_absent_bands), ', ');
+        end
+        fprintf('Read %i bands: %s\n', sum(~i_absent_bands), bands_in)
+    end
     bands(i_absent_bands, :) = [];
     
     band_names = bands.your_names;

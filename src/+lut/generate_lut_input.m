@@ -1,4 +1,8 @@
-function params = generate_lut_input(tab, n_spectra)
+function params = generate_lut_input(tab, n_spectra, outdir)
+    
+    if nargin < 3
+        outdir = '.';
+    end
 
     include = tab.include;
     lb = tab.lower(include)';
@@ -22,6 +26,13 @@ function params = generate_lut_input(tab, n_spectra)
 
     t = array2table(params);
     t.Properties.VariableNames = varnames;
-    writetable(t, 'lut_in.csv')
+    writetable(t, fullfile(outdir, 'lut_in.csv'))
+    
+    if verLessThan('matlab', '9.1')  % < 2016b
+        varnames_in = '';
+    else
+        varnames_in = strjoin(varnames, ', ');
+    end
+    fprintf('Sampled %i parameters: %s\n', length(varnames), varnames_in)
    
 end
