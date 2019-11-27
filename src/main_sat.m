@@ -64,7 +64,9 @@ end
 % sat.estimate_time(measured.refl, i_row, i_col)
 
 %% read SRF for satellites
-sensor.srf = sat.read_srf_1nm(sensors_path, sensor.instrument_name, sensor.i_srf);
+if any(strcmp(sensor.instrument_name, fixed.srf_sensors))
+    sensor.srf = sat.read_srf_1nm(sensors_path, sensor.instrument_name, sensor.i_srf);
+end
 
 %% read irradiance
 irradiance = io.read_irradiance(path);
@@ -88,26 +90,19 @@ n_params = length(tab.variable);
 n_wl = length(measured.wl);
 n_wlF = length(spectral.wlF);
 
-[parameters, parameters_std] = deal(nan(n_params, n_spectra));
-[rmse_all, exitflags] = deal(nan(n_spectra, 1));
-[refl_mod, refl_soil] = deal(nan(n_wl, n_spectra));
-[sif_rad, sif_norm] = deal(nan(n_wlF, n_spectra));
-J_all = nan(n_wl, n_params, n_spectra);  % we fit all wl we have
-figures = gobjects(n_spectra,1);
-
 %% start saving
 path = io.create_output_folder(path);
 path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
 
 %% fitting
 if ~isempty(path.lut_path)
-    % TODO: with 3d nc will fail
     warning('Fitting with look-up table')
 
-    qc_i = true([n_spectra, 1]);
+    % TODO: with 3d nc will fail: for t=1:n_times...
+    qc_i = true([n_row, n_col, n_times]);
     if isfield(measured, 'qc')
         fprintf('Filtering with quality flag\n')
-        qc = reshape(measured.qc(i_row, i_col, :), [n_spectra, 1]);
+        qc = measured.qc(i_row, i_col, :);
         qc_good_is = true(size(qc));
         if ~isempty(sensor.quality_flag_is)
             qc_good_is = (qc == sensor.quality_flag_is);
@@ -119,16 +114,70 @@ if ~isempty(path.lut_path)
         qc_i = qc_good_is & qc_good_lt;
     end
     
-    if sum(~qc_i) == n_spectra
+    if sum(~qc_i(:)) == n_spectra
         warning('All pixels were filtered out by quality flag, nothing left to fit')
         return
     end
     
+%     measured.refl = measured.refl * 0.0001;  % GEE
+    qc_is_nan = all(isnan(measured.refl), 4);
+    qc_i = qc_i & (~qc_is_nan);
+    
     fprintf(['You have %d pixels. '...
         'Fitting will take about %.2f min (~0.0000175 s / pixel / CPU)\n'], ...
-        sum(qc_i), sum(qc_i) * 0.0000175)
+        sum(qc_i(:)), sum(qc_i(:)) * 0.0000175)
     
-    measured.refl = reshape(measured.refl(i_row, i_col, :, :), [n_spectra, n_wl]);
+    %% slicing into bathces
+    batch_size = 500 * 500;
+    n_batches = ceil(n_spectra / batch_size);
+    n_cols_in_batch = floor(batch_size / n_row);  % n_row_batch == n_row
+    n_cols = ceil(n_col / n_cols_in_batch);  % with ceil n > than needed
+%     batch_c_ends = [(1:n_cols) * n_cols_in_batch, length(i_col)];
+    i_c_start = 1;
+    for i = 1:n_cols
+        i_c_end = i * n_cols_in_batch;
+        if i_c_end > n_col
+            i_c_end = n_col;
+        end
+        fprintf('batch %d / %d\n', i, n_batches)
+        
+        i_col_batch = i_col(i_c_start:i_c_end);
+        n_col_batch = length(i_col_batch);
+        
+        n_spectra_batch = n_row * n_col_batch;
+        qc_i_batch = reshape(qc_i(i_row, i_col_batch, n_times), [n_spectra_batch, 1]);
+        if sum(qc_i_batch(:)) == 0
+            i_c_start = i_c_end + 1;
+            continue
+        end
+        batch.refl = reshape(measured.refl(i_row, i_col_batch, n_times, :), [n_spectra_batch, n_wl]);
+        batch.refl = batch.refl(qc_i_batch, :);
+        batch.wl = measured.wl;
+        
+        
+        % preallocation of structures
+        [parameters, parameters_std] = deal(nan(n_params, n_spectra_batch));
+        [rmse_all, exitflags] = deal(nan(n_spectra_batch, 1));
+        [refl_mod, refl_soil] = deal(nan(n_wl, n_spectra_batch));
+        [sif_rad, sif_norm] = deal(nan(n_wlF, n_spectra_batch));
+        
+        tic
+        [params, params_std, rmse_lut, spec, spec_sd] = fit_spectra_lut(path, batch, tab);
+        toc
+        
+        parameters(:, qc_i_batch) = params;
+        parameters_std(:, qc_i_batch) = params_std;
+        rmse_all(qc_i_batch) = rmse_lut;
+        refl_mod(:, qc_i_batch) = spec;
+        
+        sat.save_output_nc_batch(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, ...
+            n_col_batch, n_times, tab.include, i_c_start)
+        fprintf('batch # %d successfully saved\n', i)
+        
+        i_c_start = i_c_end + 1;
+    end
+    return 
+    
     measured.refl = measured.refl(qc_i, :);
     tic
     [params, params_std, rmse_lut, spec, spec_sd] = fit_spectra_lut(path, measured, tab);
@@ -142,6 +191,14 @@ if ~isempty(path.lut_path)
 %     angles_single.psi = 0; % sensor.psi;
 else
     warning('Fitting with numerical optimization')
+    
+    %% preallocate structures
+    [parameters, parameters_std] = deal(nan(n_params, n_spectra));
+    [rmse_all, exitflags] = deal(nan(n_spectra, 1));
+    [refl_mod, refl_soil] = deal(nan(n_wl, n_spectra));
+    [sif_rad, sif_norm] = deal(nan(n_wlF, n_spectra));
+    J_all = nan(n_wl, n_params, n_spectra);  % we fit all wl we have
+%     figures = gobjects(n_spectra,1);
     
     %% safely writing and plotting data from (par)for loop
     if write_after_loop

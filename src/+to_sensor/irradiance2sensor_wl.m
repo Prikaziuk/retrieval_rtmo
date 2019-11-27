@@ -35,7 +35,8 @@ end
 
 function [wl, fwhm] = parse_instrument(instrument)
     [nrow, ncol] = size(instrument);
-    if ncol ~= 2
+%     if ncol ~= 2
+    if any(strcmp(instrument.Properties.VariableNames, 'SSI'))
         wl = [];
         fwhm = [];
         for i=1:nrow

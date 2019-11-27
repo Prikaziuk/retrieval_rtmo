@@ -9,6 +9,7 @@ function [measured, tab, angles, irr_meas, fixed, sensor] = synthetic_input()
     tab_files = io.read_filenames_sheet(input_path, 'Filenames');
     sensor = io.table_to_struct(tab_files, 'sensor');
 
+    fprintf('`%s` sensor\n', sensor.instrument_name) 
     angles.tts = sensor.tts;
     angles.tto = sensor.tto;
     angles.psi = sensor.psi;
@@ -46,7 +47,8 @@ function [measured, tab, angles, irr_meas, fixed, sensor] = synthetic_input()
                 instrument_name, sensors_path)
             instrument = readtable(sensors_path, 'sheet', instrument_name);
             [wl, ~] = parse_instrument(instrument);
-            measured.wl = wl';
+%             measured.wl = wl';
+            measured.wl = wl;
         end
         irr_meas = to_sensor.irradiance2sensor_wl(irradiance, instrument,  measured.wl);
         measured.i_sif = (measured.wl >= spectral.wlF(1)) & (measured.wl <= spectral.wlF(end));
@@ -59,7 +61,9 @@ end
 
 function [wl, fwhm] = parse_instrument(instrument)
     [nrow, ncol] = size(instrument);
-    if ncol ~= 2
+    
+%     if ncol ~= 2
+    if all(strcmp(instrument.Properties.VariableNames, {'start', 'stop', 'SSI'}))
         wl = [];
         fwhm = [];
         for i=1:nrow
@@ -69,6 +73,7 @@ function [wl, fwhm] = parse_instrument(instrument)
             wl = [wl, wl_domain];
             fwhm = [fwhm, fwhm_domain];
         end
+        wl = wl';
     else
         wl = instrument.wl;
         fwhm = instrument.FWHM;
