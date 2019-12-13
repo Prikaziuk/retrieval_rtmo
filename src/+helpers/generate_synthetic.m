@@ -82,7 +82,7 @@ function generate_synthetic(n_spectra, noise_times)
     fprintf(fid, 'n_spectra=%d\n', n_spectra);
     fclose(fid);
     
-    fprintf('saved all in %s', outdir)
+    fprintf('saved all in %s\n', outdir)
     
     %% plot results    
     figure()

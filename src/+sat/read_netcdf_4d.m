@@ -64,9 +64,9 @@ function out = read_netcdf_4d(nc_path, var_names)
     end
     
     if ~isempty(var_names.saa) && ~isempty(var_names.oaa)
-        saa = ncread(nc_path, var_names.saa);
-        oaa = ncread(nc_path, var_names.oaa);
-        out.raa = calc_psi(saa, oaa);
+        out.saa = ncread(nc_path, var_names.saa);
+        out.oaa = ncread(nc_path, var_names.oaa);
+%         out.raa = calc_psi(saa, oaa);
     end
     
 %     angle_names_expected = {var_names.oaa, var_names.oza, var_names.saa, var_names.sza};
@@ -108,16 +108,4 @@ function nc_mat = read_variable_4d(nc_path, var_names)
         nc_var = ncread(nc_path, varname);
         nc_mat = cat(4, nc_mat, nc_var);  % lat, lon, time, band_n
     end
-end
-
-function raa = calc_psi(saa, oaa)
-    daa = saa - oaa;
-    while any(daa < 0 | daa >= 360)
-        if any(daa < 0)
-            daa = daa + 360;
-        else
-            daa = daa - 360;
-        end
-    end
-    raa = abs(daa - 180);
 end

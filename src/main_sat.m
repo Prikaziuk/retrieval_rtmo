@@ -13,7 +13,7 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-input_path = 'Input_data.xlsx';
+input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
 % input_path = 'Input_data_S3.xlsx';
 
@@ -29,7 +29,15 @@ path.input_path = input_path;
 
 %% read reflectance
 % measured = sat.read_netcdf(path.image_path, var_names);
-measured = sat.read_netcdf_4d(path.image_path, var_names);
+[~, ~, ext] = fileparts(path.image_path);
+switch ext
+    case '.nc'
+        measured = sat.read_netcdf_4d(path.image_path, var_names);
+    case '.tif'
+        measured = sat.read_tif(path.image_path, var_names);
+    otherwise
+        error('Unexpected file extension: %s', ext);
+end
 if isa(measured.refl, 'single')  % lsqnonlin requirement
     measured.refl = double(measured.refl);
 end
@@ -92,7 +100,14 @@ n_wlF = length(spectral.wlF);
 
 %% start saving
 path = io.create_output_folder(path);
-path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
+switch ext
+    case '.nc'
+        path = sat.initialize_nc_out(path, tab, n_row, n_col, n_times, var_names.bands, measured, i_row, i_col);
+    case '.tif'
+        path = sat.initialize_tif_out(path, tab, x, y, b);
+    otherwise
+        error('Unexpected file extension: %s', ext);
+end
 
 %% fitting
 if ~isempty(path.lut_path)
@@ -120,7 +135,9 @@ if ~isempty(path.lut_path)
     end
     
 %     measured.refl = measured.refl * 0.0001;  % GEE
-    qc_is_nan = all(isnan(measured.refl), 4);
+%     measured.refl = measured.refl * 0.0001;  % hyplant
+%     qc_is_nan = all(isnan(measured.refl), 4);
+    qc_is_nan =  all(measured.refl == 0, 4);  % george soil
     qc_i = qc_i & (~qc_is_nan);
     
     fprintf(['You have %d pixels. '...
@@ -128,7 +145,7 @@ if ~isempty(path.lut_path)
         sum(qc_i(:)), sum(qc_i(:)) * 0.0000175)
     
     %% slicing into bathces
-    batch_size = 500 * 500;
+    batch_size = 200 ^ 2;
     n_batches = ceil(n_spectra / batch_size);
     n_cols_in_batch = floor(batch_size / n_row);  % n_row_batch == n_row
     n_cols = ceil(n_col / n_cols_in_batch);  % with ceil n > than needed
@@ -154,7 +171,6 @@ if ~isempty(path.lut_path)
         batch.refl = batch.refl(qc_i_batch, :);
         batch.wl = measured.wl;
         
-        
         % preallocation of structures
         [parameters, parameters_std] = deal(nan(n_params, n_spectra_batch));
         [rmse_all, exitflags] = deal(nan(n_spectra_batch, 1));
@@ -170,9 +186,16 @@ if ~isempty(path.lut_path)
         rmse_all(qc_i_batch) = rmse_lut;
         refl_mod(:, qc_i_batch) = spec;
         
-        sat.save_output_nc_batch(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, ...
-            n_col_batch, n_times, tab.include, i_c_start)
-        fprintf('batch # %d successfully saved\n', i)
+        switch ext
+            case '.nc'
+                sat.save_output_nc_batch(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, ...
+                    n_col_batch, n_times, tab.include, i_c_start)
+            case '.tif'
+                sat.save_output_tif_batch(path, parameters, rmse_all, refl_mod, n_row, n_col_batch, tab.include, i_c_start)
+            otherwise
+                error('Unexpected file extension: %s', ext);
+        end
+        fprintf('batch # %d successfully saved in %s\n', i, path.nc_path)
         
         i_c_start = i_c_end + 1;
     end

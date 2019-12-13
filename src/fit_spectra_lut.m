@@ -8,6 +8,9 @@ function [parameters, parameters_std, rmse_all, spec, spec_sd] = fit_spectra_lut
     
     lut_spec = load(path.lut_path);
     lut_spec = lut_spec.lut_spec;
+    
+    % hyplant trunc
+    % lut_spec = lut_spec(:, 17:(size(lut_spec, 2) - 19));
 
     assert(size(lut_spec, 2) == length(measured.wl), '# of wavelength in LUT and measured differs')
     

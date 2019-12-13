@@ -8,6 +8,7 @@
 *.pdf
 *.mat
 *.csv
+*.tif
 src/loop_cubes*
 src/lut/
 measured/*

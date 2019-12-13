@@ -15,12 +15,27 @@ function measured = fill_angles(measured, sensor)
         oza(:) = sensor.tto;
         measured.oza = oza;
     end
-       
-    if ~isfield(measured, 'raa')
+    
+    if isfield(measured, 'saa') && isfield(measured, 'oaa')
+        measured.raa = calc_psi(measred.saa, measured.oaa);
+    else
         fprintf('psi is taken %.02f everywhere\n', sensor.psi)
         raa = zeros(x, y, t);
         raa(:) = sensor.psi;
         measured.raa = raa;
     end
-
 end
+
+    
+function raa = calc_psi(saa, oaa)
+    daa = saa - oaa;
+    while any(daa < 0 | daa >= 360)
+        if any(daa < 0)
+            daa = daa + 360;
+        else
+            daa = daa - 360;
+        end
+    end
+    raa = abs(daa - 180);
+end
+    
