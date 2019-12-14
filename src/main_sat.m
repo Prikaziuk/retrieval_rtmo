@@ -151,7 +151,7 @@ if ~isempty(path.lut_path)
         sum(qc_i(:)), sum(qc_i(:)) * 0.0000175)
     
     %% slicing into bathces
-    batch_size = 200 ^ 2;
+    batch_size = 500 ^ 2;
     n_batches = ceil(n_spectra / batch_size);
     [r_start, r_end] = sat.batch_indexer(n_row, n_batches);
     for i = 1:n_batches
@@ -200,7 +200,7 @@ if ~isempty(path.lut_path)
     end
     if strcmp(ext, '.tif')
         fprintf('compressing resulting .tifs\n')
-        sat.compress_tif(path)
+        sat.geo_compress_tif(path)
     end
     return 
     
