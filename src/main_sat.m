@@ -13,7 +13,8 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-input_path = 'Input_data_George.xlsx';
+input_path = 'Input_data.xlsx';
+% input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
 % input_path = 'Input_data_S3.xlsx';
 
@@ -112,8 +113,7 @@ end
 %% fitting
 if ~isempty(path.lut_path)
     warning('Fitting with look-up table')
-
-    % TODO: with 3d nc will fail: for t=1:n_times...
+    
     qc_i = true([n_row, n_col, n_times]);
     if isfield(measured, 'qc')
         fprintf('Filtering with quality flag\n')
@@ -134,10 +134,16 @@ if ~isempty(path.lut_path)
         return
     end
     
+    % TODO: with 3d nc will fail: for t=1:n_times...
+    % now squeezing time and from batches writing 3d, not 4d
+    i_t = 1;
+    measured.refl = squeeze(measured.refl(:, :, i_t, :));
+    qc_i = squeeze(qc_i(:, :, i_t));
+    
 %     measured.refl = measured.refl * 0.0001;  % GEE
 %     measured.refl = measured.refl * 0.0001;  % hyplant
-%     qc_is_nan = all(isnan(measured.refl), 4);
-    qc_is_nan =  all(measured.refl == 0, 4);  % george soil
+    qc_is_nan = all(isnan(measured.refl), 3);
+%     qc_is_nan =  all(measured.refl == 0, 3);  % george soil
     qc_i = qc_i & (~qc_is_nan);
     
     fprintf(['You have %d pixels. '...
@@ -147,27 +153,21 @@ if ~isempty(path.lut_path)
     %% slicing into bathces
     batch_size = 200 ^ 2;
     n_batches = ceil(n_spectra / batch_size);
-    n_cols_in_batch = floor(batch_size / n_row);  % n_row_batch == n_row
-    n_cols = ceil(n_col / n_cols_in_batch);  % with ceil n > than needed
-%     batch_c_ends = [(1:n_cols) * n_cols_in_batch, length(i_col)];
-    i_c_start = 1;
-    for i = 1:n_cols
-        i_c_end = i * n_cols_in_batch;
-        if i_c_end > n_col
-            i_c_end = n_col;
-        end
+    [r_start, r_end] = sat.batch_indexer(n_row, n_batches);
+    for i = 1:n_batches
         fprintf('batch %d / %d\n', i, n_batches)
         
-        i_col_batch = i_col(i_c_start:i_c_end);
-        n_col_batch = length(i_col_batch);
+        i_r_start = r_start(i);
+        i_row_batch = i_row(i_r_start:r_end(i));
+        n_row_batch = length(i_row_batch);
         
-        n_spectra_batch = n_row * n_col_batch;
-        qc_i_batch = reshape(qc_i(i_row, i_col_batch, n_times), [n_spectra_batch, 1]);
+        n_spectra_batch = n_row_batch * n_col;
+        qc_i_batch = reshape(qc_i(i_row_batch, i_col), [n_spectra_batch, 1]);
         if sum(qc_i_batch(:)) == 0
-            i_c_start = i_c_end + 1;
+            fprintf('batch %d did not pass quality flag', i)
             continue
         end
-        batch.refl = reshape(measured.refl(i_row, i_col_batch, n_times, :), [n_spectra_batch, n_wl]);
+        batch.refl = reshape(measured.refl(i_row_batch, i_col, :), [n_spectra_batch, n_wl]);
         batch.refl = batch.refl(qc_i_batch, :);
         batch.wl = measured.wl;
         
@@ -188,16 +188,19 @@ if ~isempty(path.lut_path)
         
         switch ext
             case '.nc'
-                sat.save_output_nc_batch(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, ...
-                    n_col_batch, n_times, tab.include, i_c_start)
+                sat.save_output_nc_batch(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, ...
+                    n_row_batch, n_col, i_t, tab.include, i_r_start)
             case '.tif'
-                sat.save_output_tif_batch(path, parameters, rmse_all, refl_mod, n_row, n_col_batch, tab.include, i_c_start)
+                sat.save_output_tif_batch(path, parameters, rmse_all, refl_mod, ...
+                    n_row_batch, n_col, tab.include, i_r_start)
             otherwise
                 error('Unexpected file extension: %s', ext);
         end
-        fprintf('batch # %d successfully saved in %s\n', i, path.nc_path)
-        
-        i_c_start = i_c_end + 1;
+        fprintf('batch # %d successfully saved in %s\n', i, path.outdir_path)
+    end
+    if strcmp(ext, '.tif')
+        fprintf('compressing resulting .tifs\n')
+        sat.compress_tif(path)
     end
     return 
     

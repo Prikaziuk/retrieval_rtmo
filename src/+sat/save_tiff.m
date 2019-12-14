@@ -1,3 +1,6 @@
+b1 = measured.refl(:, :, 1);
+b1_sub = b1(1:1000, :);
+b1_rest = b1(1001:end, :);
 t = Tiff('test.tif', 'w');
 tagstruct = struct();
 tagstruct.ImageLength = size(b1,1);
@@ -6,7 +9,7 @@ tagstruct.Photometric = Tiff.Photometric.MinIsBlack;
 tagstruct.BitsPerSample = 32;
 tagstruct.SamplesPerPixel = 2;  % n_bands
 tagstruct.RowsPerStrip = 1;
-% tagstruct.Compression = Tiff.Compression.LZW;
+tagstruct.Compression = Tiff.Compression.LZW;
 tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Separate;
 tagstruct.SampleFormat = Tiff.SampleFormat.IEEEFP;
 tagstruct.Software = 'MATLAB';
