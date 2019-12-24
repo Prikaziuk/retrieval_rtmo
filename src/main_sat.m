@@ -14,6 +14,7 @@ spectral = fixed.spectral;
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
 input_path = 'Input_data.xlsx';
+% input_path = 'Input_data_global.xlsx';
 % input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
 % input_path = 'Input_data_S3.xlsx';
@@ -164,7 +165,7 @@ if ~isempty(path.lut_path)
         n_spectra_batch = n_row_batch * n_col;
         qc_i_batch = reshape(qc_i(i_row_batch, i_col), [n_spectra_batch, 1]);
         if sum(qc_i_batch(:)) == 0
-            fprintf('batch %d did not pass quality flag', i)
+            fprintf('batch %d did not pass quality flag or nan\n', i)
             continue
         end
         batch.refl = reshape(measured.refl(i_row_batch, i_col, :), [n_spectra_batch, n_wl]);
