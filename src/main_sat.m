@@ -115,10 +115,11 @@ end
 if ~isempty(path.lut_path)
     warning('Fitting with look-up table')
     
-    qc_i = true([n_row, n_col, n_times]);
+
+    qc_i = true(x, y, t);
     if isfield(measured, 'qc')
         fprintf('Filtering with quality flag\n')
-        qc = measured.qc(i_row, i_col, :);
+        qc = measured.qc;
         qc_good_is = true(size(qc));
         if ~isempty(sensor.quality_flag_is)
             qc_good_is = (qc == sensor.quality_flag_is);
@@ -128,6 +129,7 @@ if ~isempty(path.lut_path)
             qc_good_lt = (qc < sensor.quality_flag_lt);
         end
         qc_i = qc_good_is & qc_good_lt;
+        fprintf('%d / %d pixels passed quality flags\n', sum(qc_i(:)), numel(qc_i))
     end
     
     if sum(~qc_i(:)) == n_spectra
@@ -144,12 +146,13 @@ if ~isempty(path.lut_path)
 %     measured.refl = measured.refl * 0.0001;  % GEE
 %     measured.refl = measured.refl * 0.0001;  % hyplant
     qc_is_nan = all(isnan(measured.refl), 3);
-%     qc_is_nan =  all(measured.refl == 0, 3);  % george soil
-    qc_i = qc_i & (~qc_is_nan);
+    qc_is_0 =  all(measured.refl == 0, 3);  % george soil
+    qc_i = qc_i & (~qc_is_nan) & (~qc_is_0);
     
-    fprintf(['You have %d pixels. '...
+    n_pixels = qc_i(i_row, i_col);
+    fprintf(['You have %d valid pixels. '...
         'Fitting will take about %.2f min (~0.0000175 s / pixel / CPU)\n'], ...
-        sum(qc_i(:)), sum(qc_i(:)) * 0.0000175)
+        sum(n_pixels(:)), sum(n_pixels(:)) * 0.0000175)
     
     %% slicing into bathces
     batch_size = 500 ^ 2;
@@ -204,18 +207,6 @@ if ~isempty(path.lut_path)
         sat.geo_compress_tif(path)
     end
     return 
-    
-    measured.refl = measured.refl(qc_i, :);
-    tic
-    [params, params_std, rmse_lut, spec, spec_sd] = fit_spectra_lut(path, measured, tab);
-    toc
-    parameters(:, qc_i) = params;
-    parameters_std(:, qc_i) = params_std;
-    rmse_all(qc_i) = rmse_lut;
-    refl_mod(:, qc_i) = spec;  % better to run forward again but on 500k no way
-%     angles_single.tts = sensor.tts;
-%     angles_single.tto = 0; % sensor.tto;
-%     angles_single.psi = 0; % sensor.psi;
 else
     warning('Fitting with numerical optimization')
     
