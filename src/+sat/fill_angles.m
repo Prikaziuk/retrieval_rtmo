@@ -17,7 +17,10 @@ function measured = fill_angles(measured, sensor)
     end
     
     if isfield(measured, 'saa') && isfield(measured, 'oaa')
-        measured.raa = calc_psi(measured.saa, measured.oaa);
+        fprintf('calculating psi, be patient...\n')
+        [r, c] = size(measured.saa);
+        raa = arrayfun(@(i) calc_psi(measured.saa(i), measured.oaa(i)), 1:r*c);
+        measured.raa = reshape(raa, [r, c]);
     else
         fprintf('psi is taken %.02f everywhere\n', sensor.psi)
         raa = zeros(x, y, t);
