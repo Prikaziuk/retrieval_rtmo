@@ -14,12 +14,12 @@ function structure = table_to_struct(input_table, struct_name, is_satellite)
                  'Rin', 'c', 'FWHM', 'wlmin', 'wlmax', 'skip_lines', 'timeseries', ...
                  'quality_flag_is',  'quality_flag_lt'};
                     
-    optional = {'Rin', 'Esun', 'Esky', 'atmfile', 'lut_path', 'lut_input'};
+    optional = {'Rin', 'Esun', 'Esky', 'atmfile', 'lut_path', 'lut_input', 'ksi', 'Cv'};
 
     % expected names from inputdata sheet (all numerical by default)
     variable_names.soil =  {'B', 'BSMlat', 'BSMlon', 'SMC'};
     variable_names.leafbio = {'Cab', 'Cca', 'Cant', 'Cdm', 'Cw', 'Cs', 'N'};
-    variable_names.canopy = {'LAI', 'LIDFa', 'LIDFb'};
+    variable_names.canopy = {'LAI', 'LIDFa', 'LIDFb', 'ksi', 'Cv'};
     variable_names.sif = {'SIF_PC1', 'SIF_PC2', 'SIF_PC3', 'SIF_PC4'};
     
     common_path = {'output_path', 'simulation_name', 'Esun', 'Esky', 'atmfile', 'lut_path', 'lut_input'};

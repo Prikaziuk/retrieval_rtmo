@@ -21,10 +21,12 @@ function [i_row, i_col] = find_image_subset(sensor, measured, x, y)
     dif_lat = abs(lat - pix_lat);
     dif_lon = abs(lon - pix_lon);
     
-    if (min(dif_lat(:)) + min(dif_lon(:))) > (min(lat_step(:)) + min(lon_step(:)))  % dirty but works
+    if (min(dif_lat(:)) + min(dif_lon(:))) > (max(lat_step(:)) + max(lon_step(:)))  % dirty but works
+%     (min(lat_step(:)) + min(lon_step(:))) failed at 0
         error(['pixel (%.2f, %.2f) around which a K-buffer was requested is not within .nc file\n', ...
             'Error is around %.2f meters'], pix_lat, pix_lon, (min(dif_lat(:)) + min(dif_lon(:))) * 111111)
     end
+
         
     % find indices to subset refl
     if size(lat, 2) == 1  % goes together with lon

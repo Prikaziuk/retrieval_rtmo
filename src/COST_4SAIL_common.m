@@ -59,6 +59,7 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     canopy.lidf     = equations.leafangles(canopy.LIDFa, canopy.LIDFb); 
 
     rad   = models.RTMo_lite(soil, leafopt, canopy, angles);
+%     rad   = models.RTMo_lite_c(soil, leafopt, canopy, angles);
     
     %% canopy fluorescence from PCA, in W m-2 sr-1
     SIF = zeros(length(spectral.wlP),1);

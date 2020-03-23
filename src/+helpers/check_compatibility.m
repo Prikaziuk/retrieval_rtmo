@@ -15,7 +15,8 @@ function data_queue_present = check_compatibility()
                 'If you want you can use parfor loop instead of for loop and write output data to file after each iteration\n'])
             data_queue_present = true;
         else
-            fprintf('You have Parallel Computing Toolbox,\n If you want you can use parfor loop instead of for loop\n')
+            fprintf(['You have Parallel Computing Toolbox,\n'...
+                'If you want you can use parfor loop instead of for loop (slower but the results are not lost in case)\n'])
         end
         %% parallel computing
         % uncomment these lines

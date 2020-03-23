@@ -13,11 +13,11 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-input_path = 'Input_data.xlsx';
+% input_path = 'Input_data.xlsx';
 % input_path = 'Input_data_global.xlsx';
 % input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
-% input_path = 'Input_data_S3.xlsx';
+input_path = 'Input_data_S3_Spe.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -25,6 +25,11 @@ tab_files = io.read_filenames_sheet(input_path, 'Satellite');
 path = io.table_to_struct(tab_files, 'path', true);
 sensor = io.table_to_struct(tab_files, 'sensor', true);
 var_names = io.table_to_struct(tab_files, 'var_names', true);
+
+if ~any(strcmp(sensor.instrument_name, fixed.srf_sensors))
+    error('Sensor `%s` not in `fixed.srf_sensors`, edit `io.read_fixed_input()` and `../input/sensors.xlsx`', ...
+        sensor.instrument_name)
+end
 
 [var_names.bands, band_wl, sensor.i_srf] = sat.read_bands_sheet(input_path);
 path.input_path = input_path;
@@ -268,6 +273,7 @@ else
         measurement.wl = measured.wl;
 
         if all(isnan(measurement.refl))
+            fprintf('pixel %d refl is NaN\n', j)
             continue
         end
 

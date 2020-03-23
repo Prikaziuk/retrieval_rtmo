@@ -19,3 +19,7 @@ src/Input_data*.xlsx
 src/boundaries.csv
 lut/
 synthetic/
+src/gpr.m
+src/+models/RTMo_lite_c.m
+src/clumping/
+src/synergy_loop.m

@@ -263,7 +263,8 @@ if ~isempty(path.validation)
         parameters = parameters(:, c);    
     end
 %     plot.modelled2measured(parameters, tab, measured.val, graph_name, true)
-    [~, v, ~] = intersect(measured.val.Var1, {'LAI', 'Cab', 'Cw'}, 'stable');
+    [~, v, ~] = intersect(measured.val.Var1_1, {'LAI', 'Cab', 'Cw', 'Cv', 'ksi'}, 'stable');
+    [~, v, ~] = intersect(measured.val.Var1_1, tab.variable(tab.include), 'stable');
     plot.modelled2measured_sd(parameters, tab, measured.val(v, :), graph_name, parameters_std, true)
 %     plot.modelled2measured_sd(parameters, tab, measured.val, graph_name, parameters_std, true)
 end
@@ -272,3 +273,5 @@ end
 % plot.replot_all(your_output_xlsx_file, your_validation_path)
 % plot.replot_all(path.xlsx_path, path.validation)
 
+% set(gcf, 'PaperPosition', [0 0 32 9]); %
+% saveas(gcf, 'test.png')

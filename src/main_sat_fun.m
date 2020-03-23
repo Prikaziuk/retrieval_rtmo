@@ -1,4 +1,4 @@
-function main_sat_fun(nc_name, lat, lon)
+function main_sat_fun(nc_name, lat, lon, nc_dir_path, input_path)
 %% start fresh
 % close all
 % clear all
@@ -13,7 +13,9 @@ spectral = fixed.spectral;
 sensors_path = fullfile('../input/sensors.xlsx');
 % input_path = fullfile('Input_data.xlsx');
 % input_path = 'Input_data-default (synthetic).xlsx';
-input_path = 'Input_data_S3.xlsx';
+if nargin < 5
+    input_path = 'Input_data_S3.xlsx';
+end
 
 tab = io.read_input_sheet(input_path);
 
@@ -29,9 +31,9 @@ path.input_path = input_path;
 % measured = sat.read_netcdf(path.image_path, var_names);
 % path_cells = regexp(path.image_path,filesep,'split');
 % path_cells(end) = {nc_name};
-path.image_path = ['..' filesep 'cubes' filesep nc_name{:}];
+path.image_path = [nc_dir_path filesep nc_name];
 
-simulation_name = strsplit(nc_name{:}, '.');
+simulation_name = strsplit(nc_name, '.');
 path.simulation_name = simulation_name{1};
 
 sensor.pix_lat = lat;

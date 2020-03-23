@@ -16,5 +16,5 @@ function fixed = read_fixed_input()
     fixed.spectral = spectral;
     fixed.pcf = pcf;
     fixed.optipar = optipar.optipar;
-    fixed.srf_sensors = {'OLCI', 'MSI', 'altum_multispec', 'SLSTR', 'Synergy'};
+    fixed.srf_sensors = {'OLCI', 'MSI', 'altum_multispec', 'SLSTR', 'Synergy', 'Synergy_official'};
 end
