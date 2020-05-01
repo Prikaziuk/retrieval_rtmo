@@ -23,3 +23,5 @@ src/gpr.m
 src/+models/RTMo_lite_c.m
 src/clumping/
 src/synergy_loop.m
+src/loop_eu_global.m
+src/main_sat_fun_lut.m

@@ -13,11 +13,11 @@ spectral = fixed.spectral;
 
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
-% input_path = 'Input_data.xlsx';
+input_path = 'Input_data.xlsx';
 % input_path = 'Input_data_global.xlsx';
 % input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';
-input_path = 'Input_data_S3_Spe.xlsx';
+% input_path = 'Input_data_S3_Spe.xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -177,7 +177,9 @@ if ~isempty(path.lut_path)
             continue
         end
         batch.refl = reshape(measured.refl(i_row_batch, i_col, :), [n_spectra_batch, n_wl]);
+        batch.sza = reshape(measured.sza(i_row_batch, i_col), [n_spectra_batch, 1]);
         batch.refl = batch.refl(qc_i_batch, :);
+        batch.sza = batch.sza(qc_i_batch, :);
         batch.wl = measured.wl;
         
         % preallocation of structures

@@ -11,7 +11,7 @@ function ind = top_indices(i, meas_refl, lut_refl)
     rmses = sqrt(mean((meas_refl(i, :) - lut_refl) .^ 2, 2));
     
     [~, I] = sort(rmses);
-    ind = I(1:10)';  % top 10
+    ind = [1, I(1:10)'];  % top 10  % 1 for 3d dim of lut_spec
 %     rmses = rmses(ind);
 
 end

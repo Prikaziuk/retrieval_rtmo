@@ -18,9 +18,17 @@ function [parameters, parameters_std, rmse_all, spec, spec_sd] = fit_spectra_lut
         measured.refl = measured.refl';
     end
     
+    %% angular subset
+        
     %% search in lut
     % will 500k fit or batch?
-    ind_func = @(i) lut.top_indices(i, measured.refl, lut_spec);
+    angle_info_path = fullfile(fileparts(path.lut_path), 'angle_info.csv');
+    if exist(angle_info_path, 'file')
+        angle_info = readtable(angle_info_path);
+        ind_func = @(i) lut.top_indices_angles(i, measured.refl, lut_spec, measured.sza, angle_info);
+    else
+        ind_func = @(i) lut.top_indices(i, measured.refl, lut_spec);
+    end
     ind = arrayfun(ind_func, 1:size(measured.refl, 1), 'UniformOutput', false);  % [n_spec x n_wl]
     ind = cell2mat(ind');
     
@@ -46,13 +54,14 @@ function [parameters, parameters_std, rmse_all, spec, spec_sd] = fit_spectra_lut
     [~, i_sif, ~] = intersect(tab.variable, {'SIF_PC1', 'SIF_PC2', 'SIF_PC3', 'SIF_PC4'}, 'stable');
     parameters(i_sif, :) = 0;
     
+    %% quick solution for 3d lut(with SZA)
     fprintf('finished parameters, started spectra\n')
-    spec_fun = @(i) median(lut_spec(ind(i, :), :), 1)';
+    spec_fun = @(i) median(lut_spec(ind(i, 2:end), :, ind(i, 1)), 1)';
     spec = arrayfun(spec_fun, 1:size(ind, 1), 'UniformOutput', false);
     spec = cell2mat(spec);
     rmse_all = sqrt(mean((spec - measured.refl') .^ 2, 1));
     
-    spec_sd_fun = @(i) std(lut_spec(ind(i, :), :), 1)';
+    spec_sd_fun = @(i) std(lut_spec(ind(i, 2:end), :, ind(i, 1)), 1)';
     spec_sd = arrayfun(spec_sd_fun, 1:size(ind, 1), 'UniformOutput', false);
     spec_sd = cell2mat(spec_sd);
     if size(spec_sd, 1) == 1
