@@ -14,7 +14,6 @@ spectral = fixed.spectral;
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
 input_path = 'Input_data.xlsx';
-input_path = "D:\PyCharm_projects\Gezira\Retrieval\Input_data_gezira.xlsx";
 % input_path = 'Input_data_global.xlsx';
 % input_path = 'Input_data_George.xlsx';
 % input_path = 'Input_data-default (synthetic).xlsx';

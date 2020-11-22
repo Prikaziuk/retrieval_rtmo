@@ -9,11 +9,12 @@ function lut_workflow(n_spectra, tts_classes, input_path)
     [measured, tab, angles, irr_meas, fixed, sensor] = helpers.synthetic_input(input_path);
     
     tab_files = io.read_filenames_sheet(input_path, 'Satellite');
-    lut_path = tab_files(strcmp(tab_files.variable, 'lut_path'),:).value{1};
+%     lut_path = tab_files(strcmp(tab_files.variable, 'lut_path'),:).value{1};
+    lut_path = '';
     if isempty(lut_path)
         outdir = fullfile('..', 'lut', [sensor.instrument_name, '_', num2str(n_spectra)]);
-    %     assert(~exist(outdir, 'dir'), ['directory with LUT already exists at %s\n'...
-    %         'please, rename or delete it and rerun the function'], outdir)
+        assert(~exist(outdir, 'dir'), ['directory with LUT already exists at %s\n'...
+            'please, rename or delete it and rerun the function'], outdir)
     else
         outdir = fileparts(lut_path);
     end
@@ -57,6 +58,8 @@ function lut_workflow(n_spectra, tts_classes, input_path)
     end
     
     fprintf('made LUT with %i spectra\n', n_spectra)
+    fprintf('stored LUT in %s\nlut_path: %s\nlut_in: %s\n', outdir, fullfile(outdir, 'lut.mat'), fullfile(outdir, 'lut_in.csv'))
+    
     
     fid = fopen(fullfile(outdir, 'lut_comment.txt'), 'w');
     fprintf(fid, 'sensor %s\n', sensor.instrument_name);

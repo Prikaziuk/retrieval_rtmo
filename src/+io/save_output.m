@@ -14,5 +14,7 @@ function save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl
     
     params = [rmse_all;  parameters; parameters_std];
     xlswrite(xlsx_path, params, sheets.output, col);
+    
+    fprintf('Saved ouput in %s\n', xlsx_path)
 
 end

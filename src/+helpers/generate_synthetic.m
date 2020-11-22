@@ -12,8 +12,8 @@ function generate_synthetic(n_spectra, noise_times)
     [measured, tab, angles, irr_meas, fixed, sensor] = helpers.synthetic_input();
     
     outdir = fullfile('..', 'synthetic', [sensor.instrument_name, '_', num2str(n_spectra)]);
-%     assert(~exist(outdir, 'dir'), ['directory with synthetic input already exists at %s\n'...
-%         'please, rename or delete it and rerun the function'], outdir)
+    assert(~exist(outdir, 'dir'), ['directory with synthetic input already exists at %s\n'...
+        'please, rename or delete it and rerun the function'], outdir)
     mkdir(outdir);
     
     %% randomly sample parameters 
