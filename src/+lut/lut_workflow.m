@@ -2,7 +2,7 @@ function lut_workflow(n_spectra, tts_classes, input_path)
 
     if nargin == 0
         n_spectra = 1000;
-        tts_classes = 10:5:80;  % 10:10:80  % []
+        tts_classes = []; %10:5:80;  % 10:10:80  % []
         input_path = 'Input_data.xlsx';
     end
     
