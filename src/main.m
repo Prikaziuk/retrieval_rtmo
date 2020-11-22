@@ -13,7 +13,7 @@ spectral = fixed.spectral;
 %% read input file
 sensors_path = fullfile('..', 'input', 'sensors.xlsx');
 input_path = 'Input_data.xlsx';
-% input_path = 'Input_data_global.xlsx';
+% input_path = 'Input_data-default (synthetic).xlsx';
 
 tab = io.read_input_sheet(input_path);
 
@@ -84,9 +84,10 @@ end
 %% other sensor-related input
 measured.i_fit = (measured.wl >= sensor.wlmin) & (measured.wl <= sensor.wlmax);
 
-c = sensor.c;
-if c == -999
+if sensor.c == -999
     c = 1:size(measured.refl, 2);
+else
+    c = 1:sensor.c;
 end
 
 angles_single = helpers.get_angles(sensor, sun);
@@ -265,8 +266,9 @@ if ~isempty(path.validation)
     n_val = size(measured.val, 2) - 1;
     if length(c) < n_val
         % this ploting is not designed for one value but we hack it to do so for you
-        measured.val = measured.val(:, [1 c + 1]);
+        measured.val = measured.val(:, [1 c+1]);
         parameters = parameters(:, c);    
+        parameters_std = parameters_std(:, c);   
     end
 %     plot.modelled2measured(parameters, tab, measured.val, graph_name, true)
 %     [~, v, ~] = intersect(measured.val.Var1_1, {'LAI', 'Cab', 'Cw', 'Cv', 'ksi'}, 'stable');
