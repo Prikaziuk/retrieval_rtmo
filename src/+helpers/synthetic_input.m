@@ -1,6 +1,8 @@
-function [measured, tab, angles, irr_meas, fixed, sensor] = synthetic_input()
-
-    input_path = 'Input_data.xlsx';
+function [measured, tab, angles, irr_meas, fixed, sensor] = synthetic_input(input_path)
+    
+    if nargin == 0
+        input_path = 'Input_data.xlsx';
+    end
     
     fprintf('reading `Input` sheet for parameters and ranges\n')
     tab = io.read_input_sheet(input_path);

@@ -1,10 +1,12 @@
-function fit_soil(refl_path, wl_path)
+function [params_out, refl_bsm] = fit_soil(refl_path, wl_path)
     
-%     refl_path = "D:\George\0_Vredepel\2019-07-17\for_retrieval\20190717_vre_plot.csv";
-%     wl_path = "D:\George\0_Vredepel\2019-07-17\for_retrieval\wl.csv";
-
-    refl = io.read_dat(refl_path);
-    wl = io.read_dat(wl_path);
+    if isstring(refl_path) || ischar(refl_path)
+        refl = io.read_dat(refl_path);
+        wl = io.read_dat(wl_path);
+    else
+        refl = refl_path;
+        wl = wl_path;
+    end
     refl_soil_meas = refl(wl >= 400 & wl <= 2400, 1);
 
     stoptol = 1E-6;  % we recommend e-6

@@ -1,15 +1,22 @@
-function lut_workflow(n_spectra, tts_classes)
+function lut_workflow(n_spectra, tts_classes, input_path)
 
     if nargin == 0
         n_spectra = 1000;
         tts_classes = 10:5:80;  % 10:10:80  % []
+        input_path = 'Input_data.xlsx';
     end
     
-    [measured, tab, angles, irr_meas, fixed, sensor] = helpers.synthetic_input();
+    [measured, tab, angles, irr_meas, fixed, sensor] = helpers.synthetic_input(input_path);
     
-    outdir = fullfile('..', 'lut', [sensor.instrument_name, '_', num2str(n_spectra)]);
-%     assert(~exist(outdir, 'dir'), ['directory with LUT already exists at %s\n'...
-%         'please, rename or delete it and rerun the function'], outdir)
+    tab_files = io.read_filenames_sheet(input_path, 'Satellite');
+    lut_path = tab_files(strcmp(tab_files.variable, 'lut_path'),:).value{1};
+    if isempty(lut_path)
+        outdir = fullfile('..', 'lut', [sensor.instrument_name, '_', num2str(n_spectra)]);
+    %     assert(~exist(outdir, 'dir'), ['directory with LUT already exists at %s\n'...
+    %         'please, rename or delete it and rerun the function'], outdir)
+    else
+        outdir = fileparts(lut_path);
+    end
     mkdir(outdir)
     
     params = lut.generate_lut_input(tab, n_spectra, outdir);
