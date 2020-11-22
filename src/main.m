@@ -98,7 +98,7 @@ if sensor.timeseries
     path_ts = io.table_to_struct(tab_ts, 'path_ts');
     n_spectra = size(measured.refl, 2);
     sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, n_spectra);
-    measured.sza = sensor.angles_ts.tts;
+    measured.sza = sensor.angles_ts.tts;  % to enable 3D lut with .txt
     sensor.Rin_ts = ts.get_Rin_ts(path_ts.Rin_path, sensor.Rin, n_spectra);
 end
 %% preallocate output structures
@@ -176,6 +176,9 @@ if ~isempty(path.lut_path)
 %         else
 %             measurement.i_sif = sensor.i_sif;
         end
+        if isfield(sensor, 'angles_ts')
+            [angles_single, ~] = ts.ts_for_parfor(i, sensor);
+        end
         [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, tab_lut, angles_single, ...
                                                                irr_meas, fixed, sensor);
         refl_mod(:, i) = refl;
@@ -190,6 +193,9 @@ if ~isempty(path.lut_path)
         end
         plot.reflectance(measured.wl, spec, measured.refl, i, rmse_lut, spec_sd)
 %         plot.reflectance(measured.wl, refl_mod, measured.refl, i, rmse_all)
+        hold on
+        plot(measured.wl, refl_mod(:, i))
+        legend(sprintf('LUT (RMSE=%.2f)', rmse_lut(i)), 'measured', sprintf('RTMo (RMSE=%.2f)', rmse_all(i)))
     end
 else
     warning('Fitting with numerical optimization')

@@ -13,7 +13,7 @@ function angles = get_angles_ts(sensor, sun, path_ts, n_spectra)
         angles.psi = 0;
     end
     if ~isempty(path_ts.tts_path)
-        angles.tts = io.read_dat(path_ts.tts_path)';
+        angles.tts = io.read_dat(path_ts.tts_path);
         assert_equal_length(angles.tts, n_spectra, path_ts.tts_path)
         angles.tto = sensor.tto;
         angles.psi = sensor.psi;
