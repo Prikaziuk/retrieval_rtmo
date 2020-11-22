@@ -98,6 +98,7 @@ if sensor.timeseries
     path_ts = io.table_to_struct(tab_ts, 'path_ts');
     n_spectra = size(measured.refl, 2);
     sensor.angles_ts = ts.get_angles_ts(sensor, sun, path_ts, n_spectra);
+    measured.sza = sensor.angles_ts.tts;
     sensor.Rin_ts = ts.get_Rin_ts(path_ts.Rin_path, sensor.Rin, n_spectra);
 end
 %% preallocate output structures
