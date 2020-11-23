@@ -1,7 +1,7 @@
 function tab = read_filenames_sheet(input_path, sheetname)
     
     if nargin == 2
-        tab = readtable(input_path, 'sheet', sheetname);
+        tab = readtable(input_path, 'sheet', sheetname, 'Format', 'auto');
     else  % for MS opponents
         tab = readtable(input_path);
     end
