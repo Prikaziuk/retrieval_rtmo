@@ -1,7 +1,11 @@
 function tab = read_filenames_sheet(input_path, sheetname)
     
     if nargin == 2
-        tab = readtable(input_path, 'sheet', sheetname, 'Format', 'auto');
+        if verLessThan('matlab', '9.8')
+            tab = readtable(input_path, 'sheet', sheetname);
+        else
+            tab = readtable(input_path, 'sheet', sheetname, 'Format', 'auto');
+        end
     else  % for MS opponents
         tab = readtable(input_path);
     end
