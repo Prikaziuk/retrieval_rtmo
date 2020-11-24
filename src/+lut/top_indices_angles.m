@@ -1,7 +1,7 @@
 function ind = top_indices_angles(i, meas_refl, lut3d, sza1d, angle_info)
 
     if mod(i, 100000) == 0
-        fprintf('done %i / %i  pixels\n', i, length(meas.refl))
+        fprintf('done %i / %i  pixels\n', i, length(meas_refl))
     end
     
     [~, i_dim] = min(abs(angle_info.tts - sza1d(i)));
