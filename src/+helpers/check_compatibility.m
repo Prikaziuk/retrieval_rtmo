@@ -2,6 +2,10 @@ function data_queue_present = check_compatibility()
 
     ver_out = ver;
     toolboxes = {ver_out.Name};
+    
+    if ~verLessThan('matlab', '9.8')  % >= R2020a
+        warning('We guarantee preformance up until R2019b, your matlab version is higher. If it fails, please, report')
+    end
 
     % required
     assert(any(strcmp('Optimization Toolbox', toolboxes)), ...
