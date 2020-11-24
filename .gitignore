@@ -25,3 +25,6 @@ src/clumping/
 src/synergy_loop.m
 src/loop_eu_global.m
 src/main_sat_fun_lut.m
+src/main_sat_fun_lut.m
+src/app2.mlapp
+src/vi.m
