@@ -219,7 +219,11 @@ else
         measurement.i_sif = measured.i_sif;
         if isfield(measured, 'soil_refl')
     %         measurement.soil_refl = measured.soil_refl;
-            measurement.soil_refl = interp1(measurement.wl, measured.soil_refl, spectral.wlP, 'splines', 1E-4);
+            method = 'spline';  % M2020a name
+            if verLessThan('matlab', '9.8')
+                method = 'splines';
+            end
+            measurement.soil_refl = interp1(measurement.wl, measured.soil_refl, spectral.wlP, method, 1E-4);
         end
 
         angles = angles_single;

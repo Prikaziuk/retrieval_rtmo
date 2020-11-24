@@ -20,7 +20,11 @@ function [irradiance, signal_at_sensor] = irradiance2sensor_wl(irr_full, instrum
     end
     
     i_nan = any(isnan(signal_at_sensor), 2);  % stable interpolation over nan_regions
-    signal_in_meas = interp1(wl_sensor(~i_nan), signal_at_sensor(~i_nan, :), wl_meas, 'splines', NaN);
+    method = 'spline';  % M2020a name
+    if verLessThan('matlab', '9.8')
+        method = 'splines';
+    end
+    signal_in_meas = interp1(wl_sensor(~i_nan), signal_at_sensor(~i_nan, :), wl_meas, method, NaN);
     
     irradiance.wl = wl_meas;
     if isfield(irr_full, 't')

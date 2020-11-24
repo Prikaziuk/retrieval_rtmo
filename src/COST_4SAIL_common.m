@@ -41,7 +41,8 @@ function [er, rad, refl, rmse, soil, fluo] = COST_4SAIL_common(p, measurement, t
     
     if isfield(measurement, 'soil_refl')
         soil.refl = measurement.soil_refl;
-%         soil.refl = interp1(measurement.wl, measurement.soil_refl, spectral.wlP, 'splines', 1E-4);
+%         soil.refl = interp1(measurement.wl, measurement.soil_refl,
+%         spectral.wlP, 'splines', 1E-4); % 'spline' since M2020
     else
         soil.refl = models.BSM(soilpar, soilspec, soilemp);
     end

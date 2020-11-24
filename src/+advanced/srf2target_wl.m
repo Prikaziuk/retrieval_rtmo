@@ -35,7 +35,11 @@ function srf2target_wl(sheet_name, wl_target, paired)
         i_wlP_min = find(wl_target >= floor(c_wl(1)), 1);
         i_wlP_max = find(wl_target <= ceil(c_wl(end)), 1, 'last');
         c_wlP = wl_target(i_wlP_min:i_wlP_max);
-        resp_prospect = interp1(c_wl, c_resp, c_wlP, 'splines', NaN);
+        method = 'spline';  % M2020a name
+        if verLessThan('matlab', '9.8')
+            method = 'splines';
+        end
+        resp_prospect = interp1(c_wl, c_resp, c_wlP, method, NaN);
 %         sprintf('%d / %d', length(resp_prospect(~isnan(resp_prospect))), length(resp_prospect))
 
         out_str(i).srf = [c_wlP; resp_prospect]';
