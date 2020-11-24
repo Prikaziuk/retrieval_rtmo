@@ -91,6 +91,7 @@ else
 end
 
 angles_single = helpers.get_angles(sensor, sun);
+measured.sza = repmat(angles_single.tts, 1, size(measured.refl, 2));
 if sensor.timeseries
     warning(['You have activated `time_series` mode.\n'... 
         'Parameters will be read from `TimeSeries` sheet. ' ... 

@@ -26,6 +26,8 @@ function [parameters, parameters_std, rmse_all, spec, spec_sd] = fit_spectra_lut
     if exist(angle_info_path, 'file')
         angle_info = readtable(angle_info_path);
         ind_func = @(i) lut.top_indices_angles(i, measured.refl, lut_spec, measured.sza, angle_info);
+        fprintf(['fitting with solar zenith angle sensitive LUT ' ...
+            '=> you may safely activate timeseries mode\n'])
     else
         ind_func = @(i) lut.top_indices(i, measured.refl, lut_spec);
     end
