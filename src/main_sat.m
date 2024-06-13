@@ -340,8 +340,19 @@ end
 % writing at the end is faster than send() for j > 100, but less safe to errors
 
 if write_after_loop
-    fprintf('writing .nc to %s\n', path.nc_path)
-    sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times, tab.include)
+    switch ext
+        case '.nc'
+            fprintf('writing .nc to %s\n', path.nc_path)
+            sat.save_output_nc(path, parameters, rmse_all, refl_mod, sif_rad, exitflags, n_row, n_col, n_times, tab.include)
+        case '.tif'
+            fprintf('writing .tif to %s\n', path.outdir_path)
+            sat.save_output_tif_batch(path, parameters, rmse_all, refl_mod, n_row, n_col, tab.include, 1)
+            fprintf('compressing resulting .tifs\n')
+            sat.geo_compress_tif(path)
+        otherwise
+            error('Unexpected file extension: %s', ext);
+    end
+end
 %     if isunix
 %         warning('not yet writing to .csv on UNIX, only .nc will be written')
 %         path = io.initialize_csv(path, tab.variable);
@@ -349,6 +360,6 @@ if write_after_loop
 %         disp('started writing to .xlsx')
 %         io.save_output(path, rmse_all, parameters, parameters_std, refl_meas, refl_mod, refl_soil, sif_norm, sif_rad)
 %     end
-end
+
 
 % set(figures(1), 'Visible', 'on')
