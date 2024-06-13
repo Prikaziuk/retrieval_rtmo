@@ -246,8 +246,8 @@ else
         %% uncertainty in parameters
         measurement.std = measured.std(:, j);
         parameters_std(:, j) = 0;
-%         uncertainty_j = propagate_uncertainty(results_j.parameters, measurement, tab, angles,  irr_meas, fixed, sensor_in);
-%         parameters_std(:, j) = uncertainty_j.std_params;
+        uncertainty_j = propagate_uncertainty(results_j.parameters, measurement, tab, angles,  irr_meas, fixed, sensor_in);
+        parameters_std(:, j) = uncertainty_j.std_params;
 %         J_all(:,:,j) = uncertainty_j.J;
 
         figures(j) = plot.reflectance_hidden(measurement.wl, results_j.refl_mod, measurement.refl, j, results_j.rmse);
