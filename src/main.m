@@ -264,7 +264,7 @@ else
     set(figures(c(1)), 'Visible', 'on')
 end
 %% if your parfor does not fail try disabling send
-io.save_output(path, rmse_all, parameters, parameters_std, measured.refl, refl_mod, refl_soil, sif_norm, sif_rad)
+io.save_output(path, rmse_all, parameters, parameters_std, measured.refl, refl_mod, refl_soil, sif_norm, sif_rad, measurement)
 
 if ~isempty(path.validation)
     graph_name = [path.simulation_name, ' ', sensor.instrument_name];
